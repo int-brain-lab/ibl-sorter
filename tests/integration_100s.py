@@ -32,7 +32,7 @@ else:
 ks_output_dir.mkdir(parents=True, exist_ok=True)
 alf_path = ks_output_dir.joinpath('alf')
 
-run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR, neuropixel_version=1,
+run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR,
                       ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='DEBUG')
 
 if DELETE == False:

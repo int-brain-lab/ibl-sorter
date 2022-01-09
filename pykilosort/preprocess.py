@@ -337,7 +337,7 @@ def destriping(ctx):
     wrot = cp.asnumpy(ir.Wrot)
     # get the bad channels
     # detect_bad_channels_cbin
-    kwargs = dict(output_file=ir.proc_path, wrot=wrot, nc_out=probe.Nchan, h=probe,
+    kwargs = dict(output_file=ir.proc_path, wrot=wrot, nc_out=probe.Nchan, h=probe.h,
                   butter_kwargs={'N': 3, 'Wn': ctx.params.fshigh / ctx.params.fs * 2, 'btype': 'highpass'})
 
     logger.info("Pre-processing: applying destriping option to the raw data")

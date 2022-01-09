@@ -64,7 +64,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
                           ks_output_dir=None, alf_path=None, log_level='INFO', params=None):
     """
     This runs the spike sorting and outputs the raw pykilosort without ALF conversion
-    :param bin_file: binary file full path to
+    :param bin_file: binary file full path
     :param scratch_dir: working directory (home of the .kilosort folder) SSD drive preferred.
     :param delete: bool, optional, defaults to True: whether or not to delete the .kilosort temp folder
     :param ks_output_dir: string or Path: output directory defaults to None, in which case it will output in the
@@ -84,7 +84,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     add_default_handler(level=log_level, filename=log_file)
     # construct the probe geometry information
     if params is None:
-        params = ibl_pykilosort_params(bin_file[0]) if isinstance(bin_file, list) else ibl_pykilosort_params(bin_file)
+        params = ibl_pykilosort_params(bin_file)
     try:
         _logger.info(f"Starting Pykilosort version {__version__}, output in {bin_file.parent}")
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
@@ -119,12 +119,10 @@ def probe_geometry(bin_file):
     """
     if isinstance(bin_file, list):
         sr = spikeglx.Reader(bin_file[0])
-        h = sr.geometry
-        ver = sr
     else:
-        assert(bin_file == 1 or bin_file == 2)
-        h = neuropixel.trace_header(version=bin_file)
-        ver = bin_file.major_version
+        sr = spikeglx.Reader(bin_file)
+    h = sr.geometry
+    ver = sr.major_version
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1
@@ -134,4 +132,5 @@ def probe_geometry(bin_file):
     probe.kcoords = np.zeros(nc)
     probe.neuropixel_version = ver
     probe.sample_shift = h['sample_shift']
+    probe.h = h
     return probe
