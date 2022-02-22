@@ -28,38 +28,67 @@ nvcc # This is the CUDA compiler
 
 ### Doing the install using Anaconda
 
-On Linux install 
+Only on Linux, first install fftw by running the following 
     
     sudo apt-get install -y libfftw3-dev
 
+Navigate to the desired location for the repository and clone it
+
+    git clone -b drift_test_stable https://github.com/kushbanga/pykilosort.git
+    cd pykilosort
+
 Create a conda environment
 
-    cd ~/Documents/PYTHON/SPIKE_SORTING/pykilosort
-    conda env create -f ./pyks2.yml
+    conda env create -f pyks2.yml
     conda activate pyks2
+    conda develop .
 
-Clone the repository:
+### Managing CUDA Errors
 
-    git clone -b ibl_prod https://github.com/int-brain-lab/pykilosort.git
-    cd pykilosort
-    pip install -e .
-    pip install cython
-    pip install pyfftw
-    pip install git+https://github.com/int-brain-lab/ibllib.git
-    pip install -U phylib
+Errors with the CUDA installation can sometimes be fixed by downgrading
+the version of cudatoolkit installed. Currently tested versions are 9.2,
+10.0, 10.2, 11.0 and 11.5
 
+To check the current version run the following:
 
+    conda activate pyks2
+    conda list cudatoolkit
+
+To install version 10.0 for example run the following
+
+    conda activate pyks2
+    conda remove cupy, cudatoolkit
+    conda install -c conda-forge cupy cudatoolkit=10.0
 
 
 ## Usage
 
 ### Example
 
-The programming interface is subject to change. The following code example should be saved in a directory, along with the following files:
+This is how to run for general users
+```python
+from pathlib import Path
+from pykilosort import run, add_default_handler, np1_probe, np2_probe
 
-* `imec_385_100s.bin`
+# Run standard ks2.5 algorithm for a np1 probe
+data_path = Path('path/to/data/data.bin')
+dir_path = Path('path/to/output/folder') # by default uses the same folder as the dataset
+add_default_handler(level='INFO') # print output as the algorithm runs
+run(data_path, dir_path=dir_path, probe=np1_probe())
 
-This is how to run for NP1.0 probe
+# Run chronic recordings for a np2 probe
+# For now this still uses ks2.5 clustering, chronic clustering algorithm coming soon!
+data_paths = [
+    Path('path/to/first/dataset/dataset.bin'),
+    Path('path/to/second/dataset/dataset.bin'),
+    Path('path/to/third/dataset/dataset.bin'),
+]
+dir_path = Path('path/to/output/folder') # by default uses the same folder as the first dataset
+add_default_handler(level='INFO')
+run(data_paths, dir_path=dir_path, probe=np2_probe(), low_memory=True)
+```
+
+This is how to run for NP1.0 probe (for IBL)
 ```python
 import shutil
 from pathlib import Path

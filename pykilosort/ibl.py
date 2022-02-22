@@ -120,15 +120,17 @@ def probe_geometry(bin_file):
     if isinstance(bin_file, list):
         sr = spikeglx.Reader(bin_file[0])
     else:
-        sr = spikeglx.Reader(bin_file)
-    h = sr.geometry
-    ver = sr.major_version
+        assert(bin_file == 1 or bin_file == 2)
+        h = neuropixel.trace_header(version=bin_file)
+        ver = bin_file
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1
     probe.chanMap = np.arange(nc)
     probe.xc = h['x']
     probe.yc = h['y']
+    probe.x = h['x']
+    probe.y = h['y']
     probe.kcoords = np.zeros(nc)
     probe.neuropixel_version = ver
     probe.sample_shift = h['sample_shift']

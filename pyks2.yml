@@ -7,13 +7,14 @@ channels:
   - defaults
   - conda-forge
 dependencies:
- - python >= 3.8
+ - python >= 3.8, <3.10  # TODO: Currently doesn't work for Python 3.10
  - ipython
  - scipy
  - numpy
  # Cupy needs some thought on whether to pin and/or which version to pin.
  # It may be hard to get a version that works for a good range of hardware.
  - cupy >= 9
+ - cudatoolkit <= 11.0
  - matplotlib
  - tqdm
  - click
@@ -25,6 +26,7 @@ dependencies:
  - pip
  - pyqtgraph
  - pyqt
+ - pyfftw
  - pip:
     - ibllib
     - phylib
