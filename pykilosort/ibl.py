@@ -119,7 +119,14 @@ def probe_geometry(bin_file):
     """
     if isinstance(bin_file, list):
         sr = spikeglx.Reader(bin_file[0])
+        h = sr.geometry
+        ver = sr.major_version
+    elif isinstance(bin_file, str) or isinstance(bin_file, Path):
+        sr = spikeglx.Reader(bin_file)
+        h = sr.geometry
+        ver = sr.major_version
     else:
+        print(bin_file)
         assert(bin_file == 1 or bin_file == 2)
         h = neuropixel.trace_header(version=bin_file)
         ver = bin_file

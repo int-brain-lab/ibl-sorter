@@ -205,12 +205,6 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
             buff = np.concatenate(
                 (buff, np.tile(buff[nsampcurr - 1], (NTbuff - nsampcurr, 1))), axis=0)
 
-        # if False and params.preprocessing_function == 'destriping':
-        #     from ibllib.dsp.voltage import destripe
-        #     datr = destripe(buff[:, :chanMap.size].T, fs=fs,
-        #                     butter_kwargs={'N': 3, 'Wn': fshigh / fs * 2, 'btype': 'highpass'})
-        #     datr = cp.asarray(datr.T)
-        # else:
         buff_g = cp.asarray(buff, dtype=np.float32)
 
         # apply filters and median subtraction
