@@ -4,7 +4,7 @@ matplotlib
 mock
 numba
 numpy
-ibllib
+ibl-neuropixel
 phylib
 --pre phy
 pydantic

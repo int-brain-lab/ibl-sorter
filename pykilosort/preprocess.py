@@ -8,6 +8,7 @@ import cupy as cp
 from tqdm.auto import tqdm
 
 from .cptools import lfilter, median
+from neurodsp import decompress_destripe_cbin, detect_bad_channels_cbin
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +331,6 @@ def get_Nbatch(raw_data, params):
 def destriping(ctx):
     """IBL destriping - multiprocessing CPU version for the time being, although leveraging the GPU
     for the many FFTs performed would probably be quite beneficial """
-    from ibllib.dsp.voltage import decompress_destripe_cbin, detect_bad_channels_cbin
     probe = ctx.probe
     raw_data = ctx.raw_data
     ir = ctx.intermediate
