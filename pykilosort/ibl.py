@@ -6,8 +6,9 @@ import shutil
 
 import numpy as np
 
-from ibllib.io import spikeglx
-from ibllib.ephys import spikes, neuropixel
+import spikeglx
+import neuropixel
+from ibllib.ephys import spikes
 from one.alf.files import get_session_path
 from pykilosort import add_default_handler, run, Bunch, __version__
 from pykilosort.params import KilosortParams

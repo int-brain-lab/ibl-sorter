@@ -28,7 +28,7 @@ dependencies:
  - pyqt
  - pyfftw
  - pip:
-    - ibllib
+    - ibl-neuropixel
     - phylib
     - phy --pre
     - spikeextractors

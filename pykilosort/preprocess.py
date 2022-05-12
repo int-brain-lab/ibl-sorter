@@ -8,7 +8,7 @@ import cupy as cp
 from tqdm.auto import tqdm
 
 from .cptools import lfilter, median
-from neurodsp import decompress_destripe_cbin, detect_bad_channels_cbin
+from neurodsp.voltage import decompress_destripe_cbin
 
 logger = logging.getLogger(__name__)
 
