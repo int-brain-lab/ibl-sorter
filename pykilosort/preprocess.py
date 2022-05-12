@@ -194,7 +194,10 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
     # Nchan is obtained after the bad channels have been removed
     CC = cp.zeros((Nchan, Nchan))
 
-    for ibatch in tqdm(range(0, Nbatch, nSkipCov), desc="Computing the whitening matrix"):
+    nbatches_cov = np.arange(0, Nbatch, nSkipCov).size
+    CCall = cp.zeros((nbatches_cov, Nchan, Nchan))
+
+    for icc, ibatch in enumerate(tqdm(range(0, Nbatch, nSkipCov), desc="Computing the whitening matrix")):
         i = max(0, NT * ibatch - ntbuff)
         # WARNING: we no longer use Fortran order, so raw_data is nsamples x NchanTOT
         buff = raw_data[i:i + NTbuff]
@@ -213,11 +216,9 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
 
         # remove buffers on either side of the data batch
         datr = datr[ntbuff: NT + ntbuff]
-
         assert datr.flags.c_contiguous
-        CC = CC + cp.dot(datr.T, datr) / NT  # sample covariance
-
-    CC = CC / max(ceil((Nbatch - 1) / nSkipCov), 1)
+        CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
+    CC = cp.median(CCall, axis=0)
 
     if params.do_whitening:
         if whiteningRange < np.inf:
@@ -234,11 +235,11 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
         Wrot = cp.diag(cp.diag(CC) ** (-0.5))
 
     Wrot = Wrot * scaleproc
-
-    logger.info("Computed the whitening matrix.")
-
+    condition_number = np.linalg.cond(cp.asnumpy(Wrot))
+    logger.info(f"Computed the whitening matrix cond = {condition_number}.")
+    if condition_number > 50:
+        logger.warning("high conditioning of the whitening matrix can result in noisy and poor results")
     return Wrot
-
 
 def get_good_channels(raw_data=None, probe=None, params=None):
     """
