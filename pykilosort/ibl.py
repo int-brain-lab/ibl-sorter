@@ -87,8 +87,13 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     if params is None:
         params = ibl_pykilosort_params(bin_file)
     try:
-        _logger.info(f"Starting Pykilosort version {__version__}, output in {bin_file.parent}")
+        _logger.info(f"Starting Pykilosort version {__version__}")
+        _logger.info(f"Scratch dir {ks_output_dir}")
+        _logger.info(f"Output dir {bin_file.parent}")
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
+        # move back the QC files to the original probe folder
+        for qc_file in scratch_dir.joinpath(".kilosort", bin_file.name).glob('_iblqc_*'):
+            shutil.copy(qc_file, bin_file.parent.joinpath(qc_file.name))
         if delete:
             shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
     except Exception as e:
