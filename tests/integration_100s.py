@@ -48,3 +48,7 @@ if DELETE == False:
     intermediate_directory = ks_output_dir.joinpath('intermediate')
     intermediate_directory.mkdir(exist_ok=True)
     shutil.copy(pre_proc_file, intermediate_directory)
+
+# this is how to test against the current iblscript methods
+# print(f'~/Documents/PYTHON/iblscripts/deploy/serverpc/kilosort2/run_pykilosort.py {INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.cbin")} {SCRATCH_DIR}')
+# ~/Documents/PYTHON/iblscripts/deploy/serverpc/kilosort2/run_pykilosort.py /datadisk/Data/spike_sorting/pykilosort_tests/imec_385_100s.ap.cbin /home/olivier/scratch/pykilosort
