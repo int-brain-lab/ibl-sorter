@@ -1,4 +1,6 @@
 # 1.3
+## 1.3.1
+-   copy the `_iblqc_` files to the original probe directory
 ## 1.3.0
 -   Support for Neuropixel 2
 -   read geometry from the spikeglx metadata file
