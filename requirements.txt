@@ -6,9 +6,8 @@ numba
 numpy
 ibl-neuropixel
 phylib
---pre phy
 pydantic
 pytest
 scipy
-spikeextractors
+spikeinterface
 tqdm
