@@ -1342,9 +1342,14 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
     amplitudes = st3[:, 2]
 
     Nchan = probe.Nchan
-
-    xcoords = probe.xc
-    ycoords = probe.yc
+    if probe.shank is not None:
+        xcoords = probe.x
+        ycoords = probe.y
+        shanks = probe.shank
+    else:
+        xcoords = probe.xc
+        ycoords = probe.yc
+        shanks = None
     chanMap = probe.chanMap
     chanMap0ind = chanMap  # - 1
 
@@ -1472,6 +1477,8 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
 
         _save('channel_map', chanMap0ind)
         _save('channel_positions', np.c_[xcoords, ycoords], np.float32)
+        if shanks is not None:
+            _save('channel_shanks', shanks, np.int8)
 
         # _save('template_features', templateFeatures)
         # with open(join(output_dir, 'template_features.npy'), 'wb') as fp:
