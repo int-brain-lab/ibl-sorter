@@ -10,6 +10,7 @@ import spikeglx
 import neuropixel
 from ibllib.ephys import spikes
 from one.alf.files import get_session_path
+from one.remote import aws
 from pykilosort import add_default_handler, run, Bunch, __version__
 from pykilosort.params import KilosortParams
 
@@ -117,6 +118,7 @@ def ibl_pykilosort_params(bin_file):
     params = KilosortParams()
     params.preprocessing_function = 'destriping'
     params.probe = probe_geometry(bin_file)
+    params.minFR = 0
     # params = {k: dict(params)[k] for k in sorted(dict(params))}
     return dict(params)
 
@@ -153,3 +155,11 @@ def probe_geometry(bin_file):
     probe.sample_shift = h['sample_shift']
     probe.h = h
     return probe
+
+
+def download_test_data(local_folder):
+    return aws.s3_download_folder('spikesorting/integration_tests', local_folder)
+
+
+def download_benchmark_data(local_folder):
+    return aws.s3_download_folder('spikesorting/benchmarks', local_folder)

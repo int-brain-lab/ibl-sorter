@@ -11,6 +11,7 @@ import spikeglx
 import brainbox.plot as bbplot
 import one.alf.io as alfio
 from brainbox.metrics.single_units import spike_sorting_metrics
+from viewephys.gui import viewephys
 
 
 def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
