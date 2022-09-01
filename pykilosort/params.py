@@ -15,7 +15,9 @@ class Probe(BaseModel):
     Nchan: t.Optional[int] = Field(
         None, description="Nchan < NchanTOT if some channels should not be used."
     )
-
+    shank: t.Optional[np.ndarray] = Field(
+        None, description="Channel shanks labels"
+    )
     chanMap: np.ndarray  # TODO: add constraints
     kcoords: np.ndarray  # TODO: add constraints
     xc: np.ndarray

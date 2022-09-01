@@ -1,4 +1,8 @@
 # 1.3
+## 1.3.3
+-   change integration tests infrastructure
+## 1.3.2
+-   support for NP2 geometries: label x coordinates of shanks at 200um, outputs shanks dataset
 ## 1.3.1
 -   copy the `_iblqc_` files to the original probe directory
 ## 1.3.0

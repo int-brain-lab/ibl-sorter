@@ -12,8 +12,8 @@ def test_shift_data():
     assert np.isfortran(test_result)
     assert np.allclose(test_result, np.asfortranarray((data @ transformation.T).astype("int16")))
 
-def test_align_block2():
 
+def test_align_block2():
     # Rigid Case
     spike_histograms = np.zeros((20, 2, 3))
     spike_histograms[2:4,:,0] = 1

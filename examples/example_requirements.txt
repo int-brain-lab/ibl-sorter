@@ -1,1 +1,0 @@
-git+https://github.com/flatironinstitute/spikeforest2.git

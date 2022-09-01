@@ -22,14 +22,11 @@ dependencies:
  - pytest
  - pytest-cov
  - mock
-# - numba
  - pip
  - pyqtgraph
  - pyqt
-# - pyfftw
  - pip:
-    - numba
     - pyfftw
-    - ibl-neuropixel
     - phylib
     - spikeinterface
+    - ibllib
