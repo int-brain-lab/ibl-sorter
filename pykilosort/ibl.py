@@ -90,6 +90,9 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Starting Pykilosort version {__version__}")
         _logger.info(f"Scratch dir {ks_output_dir}")
         _logger.info(f"Output dir {bin_file.parent}")
+        _logger.info(f"Log file {log_file}")
+        _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
+
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
         # move back the QC files to the original probe folder
         for qc_file in scratch_dir.joinpath(".kilosort", bin_file.name).glob('_iblqc_*'):
@@ -140,10 +143,11 @@ def probe_geometry(bin_file):
     probe = Bunch()
     probe.NchanTOT = nc + 1
     probe.chanMap = np.arange(nc)
-    probe.xc = h['x']
+    probe.xc = h['x'] + h['shank'] * 200
     probe.yc = h['y']
     probe.x = h['x']
     probe.y = h['y']
+    probe.shank = h['shank']
     probe.kcoords = np.zeros(nc)
     probe.neuropixel_version = ver
     probe.sample_shift = h['sample_shift']
