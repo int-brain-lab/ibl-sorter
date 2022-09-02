@@ -26,25 +26,6 @@ Create a conda environment
     conda env create -f pyks2.yml
     conda activate pyks2
     pip install -e .
-    
-
-### Managing CUDA Errors
-
-Errors with the CUDA installation can sometimes be fixed by downgrading
-the version of cudatoolkit installed. Currently tested versions are 9.2,
-10.0, 10.2, 11.0 and 11.5
-
-To check the current version run the following:
-
-    conda activate pyks2
-    conda list cudatoolkit
-
-To install version 10.0 for example run the following
-
-    conda activate pyks2
-    conda remove cupy, cudatoolkit
-    conda install -c conda-forge cupy cudatoolkit=10.0
-
 
 ## Usage
 
@@ -79,3 +60,21 @@ params['Th'] = [6, 3]
 run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
                       ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
 ```
+
+## Troubleshooting
+### Managing CUDA Errors
+
+Errors with the CUDA installation can sometimes be fixed by downgrading
+the version of cudatoolkit installed. Currently tested versions are 9.2,
+10.0, 10.2, 11.0 and 11.5
+
+To check the current version run the following:
+
+    conda activate pyks2
+    conda list cudatoolkit
+
+To install version 10.0 for example run the following
+
+    conda activate pyks2
+    conda remove cupy, cudatoolkit
+    conda install -c conda-forge cupy cudatoolkit=10.0

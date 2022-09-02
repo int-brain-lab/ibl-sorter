@@ -94,7 +94,6 @@ def run(
     # Find good channels.
     # NOTE: now we use C order from loading up to the creation of the proc file, which is
     # in Fortran order.
-    params.minfr_goodchannels = 0
     if params.minfr_goodchannels > 0:  # discard channels that have very few spikes
         if "good_channels" not in ctx.timer.keys():
             # determine bad channels

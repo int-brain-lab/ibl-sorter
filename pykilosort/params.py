@@ -93,7 +93,7 @@ class KilosortParams(BaseModel):
     fshigh: float = Field(300.0, description="high pass filter frequency")
     fslow: t.Optional[float] = Field(None, description="low pass filter frequency")
     minfr_goodchannels: float = Field(
-        0.1, description="minimum firing rate on a 'good' channel (0 to skip)"
+        0, description="minimum firing rate on a 'good' channel (0 to skip)"
     )
 
     genericSpkTh: float = Field(
