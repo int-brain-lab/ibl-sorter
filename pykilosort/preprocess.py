@@ -8,7 +8,7 @@ import cupy as cp
 from tqdm.auto import tqdm
 
 from .cptools import lfilter, median
-from neurodsp.voltage import decompress_destripe_cbin
+from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
 
 logger = logging.getLogger(__name__)
 
@@ -170,55 +170,63 @@ def whiteningLocal(CC, yc, xc, nRange):
     return Wrot
 
 
+def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None):
+    preprocessing_function = preprocessing_function or params.preprocessing_function
+    if preprocessing_function == 'destriping':
+        # takes 25 samples of 500ms from 10 seconds to t -25s
+        CCall = np.zeros((25, probe.Nchan, probe.Nchan))
+        t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
+        for icc, t0 in enumerate(tqdm(t0s)):
+            s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
+            raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
+            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=True) / probe['sample2volt']
+            CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
+        CC = cp.asarray(np.median(CCall, axis=0))
+    else:
+        nSkipCov = nSkipCov or params.nSkipCov
+        Nbatch = get_Nbatch(raw_data, params)
+        NT, NTbuff, ntbuff = (params.NT, params.NTbuff, params.ntbuff)
+        nbatches_cov = np.arange(0, Nbatch, nSkipCov).size
+        CCall = cp.zeros((nbatches_cov, probe.Nchan, probe.Nchan))
+        for icc, ibatch in enumerate(tqdm(range(0, Nbatch, nSkipCov), desc="Computing the whitening matrix")):
+            i = max(0, NT * ibatch - ntbuff)
+            # WARNING: we no longer use Fortran order, so raw_data is nsamples x NchanTOT
+            buff = raw_data[i:i + NTbuff]
+            assert buff.shape[0] > buff.shape[1]
+            assert buff.flags.c_contiguous
+            nsampcurr = buff.shape[0]
+            if nsampcurr < NTbuff:
+                buff = np.concatenate(
+                    (buff, np.tile(buff[nsampcurr - 1], (NTbuff - nsampcurr, 1))), axis=0)
+            buff_g = cp.asarray(buff, dtype=np.float32)
+            # apply filters and median subtraction
+            datr = gpufilter(buff_g, fs=params.fs, fshigh=params.fshigh, chanMap=probe.chanMap)
+            # remove buffers on either side of the data batch
+            datr = datr[ntbuff: NT + ntbuff]
+            assert datr.flags.c_contiguous
+            CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
+        CC = cp.median(CCall, axis=0)
+    return CC
+
+
 def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
     """
     based on a subset of the data, compute a channel whitening matrix
     this requires temporal filtering first (gpufilter)
     """
-    Nbatch = get_Nbatch(raw_data, params)
-    ntbuff = params.ntbuff
-    NTbuff = params.NTbuff
     whiteningRange = params.whiteningRange
     scaleproc = params.scaleproc
-    NT = params.NT
-    fs = params.fs
-    fshigh = params.fshigh
-    if nSkipCov is None:
-        nSkipCov = params.nSkipCov
 
-    xc = probe.xc
-    yc = probe.yc
-    chanMap = probe.chanMap
     Nchan = probe.Nchan
+    CC = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov)
+    # CCks2 = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov, preprocessing_function='ks2')
 
-    # Nchan is obtained after the bad channels have been removed
-    CC = cp.zeros((Nchan, Nchan))
-
-    nbatches_cov = np.arange(0, Nbatch, nSkipCov).size
-    CCall = cp.zeros((nbatches_cov, Nchan, Nchan))
-
-    for icc, ibatch in enumerate(tqdm(range(0, Nbatch, nSkipCov), desc="Computing the whitening matrix")):
-        i = max(0, NT * ibatch - ntbuff)
-        # WARNING: we no longer use Fortran order, so raw_data is nsamples x NchanTOT
-        buff = raw_data[i:i + NTbuff]
-        assert buff.shape[0] > buff.shape[1]
-        assert buff.flags.c_contiguous
-
-        nsampcurr = buff.shape[0]
-        if nsampcurr < NTbuff:
-            buff = np.concatenate(
-                (buff, np.tile(buff[nsampcurr - 1], (NTbuff - nsampcurr, 1))), axis=0)
-
-        buff_g = cp.asarray(buff, dtype=np.float32)
-
-        # apply filters and median subtraction
-        datr = gpufilter(buff_g, fs=fs, fshigh=fshigh, chanMap=chanMap)
-
-        # remove buffers on either side of the data batch
-        datr = datr[ntbuff: NT + ntbuff]
-        assert datr.flags.c_contiguous
-        CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
-    CC = cp.median(CCall, axis=0)
+    # import matplotlib.pyplot as plt
+    # CCks2 = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov, preprocessing_function='ks2')
+    # plt.figure()
+    # plt.imshow(20 * np.log10(np.abs(CC)), vmin=0, vmax=60), plt.colorbar()
+    # plt.figure()
+    # plt.imshow(20 * np.log10(np.abs(CCks2.get())), vmin=0, vmax=60),  plt.colorbar()
 
     if params.do_whitening:
         if whiteningRange < np.inf:
@@ -227,7 +235,7 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
             whiteningRange = min(whiteningRange, Nchan)
             # this function performs the same matrix inversions as below, just on subsets of
             # channels around each channel
-            Wrot = whiteningLocal(CC, yc, xc, whiteningRange)
+            Wrot = whiteningLocal(CC, probe.yc, probe.xc, whiteningRange)
         else:
             Wrot = whiteningFromCovariance(CC)
     else:

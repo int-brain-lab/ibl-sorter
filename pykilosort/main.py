@@ -1,6 +1,5 @@
 import logging
 import shutil
-import os
 from pathlib import Path, PurePath
 
 import numpy as np
@@ -8,7 +7,7 @@ import numpy as np
 from .preprocess import preprocess, get_good_channels, get_whitening_matrix, get_Nbatch, destriping
 from .cluster import clusterSingleBatches
 from .datashift2 import datashift2
-from .learn import learnAndSolve8b, compress_templates
+from .learn import learnAndSolve8b
 from .postprocess import find_merges, splitAllClusters, set_cutoff, rezToPhy
 from .utils import Bunch, Context, memmap_large_array, load_probe, copy_bunch, DataLoader, \
                 RawDataLoader

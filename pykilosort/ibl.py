@@ -131,17 +131,14 @@ def probe_geometry(bin_file):
     """
     if isinstance(bin_file, list):
         sr = spikeglx.Reader(bin_file[0])
-        h = sr.geometry
-        ver = sr.major_version
+        h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     elif isinstance(bin_file, str) or isinstance(bin_file, Path):
         sr = spikeglx.Reader(bin_file)
-        h = sr.geometry
-        ver = sr.major_version
+        h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     else:
         print(bin_file)
         assert(bin_file == 1 or bin_file == 2)
-        h = neuropixel.trace_header(version=bin_file)
-        ver = bin_file
+        h, ver, s2v = (neuropixel.trace_header(version=bin_file), bin_file, 2.34375e-06)
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1
@@ -152,9 +149,8 @@ def probe_geometry(bin_file):
     probe.y = h['y']
     probe.shank = h['shank']
     probe.kcoords = np.zeros(nc)
-    probe.neuropixel_version = ver
     probe.sample_shift = h['sample_shift']
-    probe.h = h
+    probe.h, probe.neuropixel_version, probe.sample2volt = (h, ver, s2v)
     return probe
 
 
