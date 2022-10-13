@@ -117,7 +117,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
 
 
 def ibl_pykilosort_params(bin_file):
-
     params = KilosortParams()
     params.preprocessing_function = 'destriping'
     params.probe = probe_geometry(bin_file)

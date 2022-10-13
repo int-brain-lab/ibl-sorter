@@ -93,7 +93,6 @@ def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
     if raw_plots:
         if bin_file is None:
             raise IOError('If raw_plots=True a bin_file must be passed')
-        from viewephys.gui import viewephys
         # Load a slice of raw data
         sr = spikeglx.Reader(bin_file)
         start = int(raw_start * sr.fs)

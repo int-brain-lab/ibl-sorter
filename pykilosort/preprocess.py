@@ -1,13 +1,12 @@
 import logging
 from math import ceil
-from pathlib import Path
 
 import numpy as np
 from scipy.signal import butter
 import cupy as cp
 from tqdm.auto import tqdm
-import matplotlib.pyplot as plt
 
+import pykilosort.qc
 from .cptools import lfilter, median
 from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
 
@@ -171,7 +170,7 @@ def whiteningLocal(CC, yc, xc, nRange):
     return Wrot
 
 
-def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None, qc_path=None):
+def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None):
     """
     Computes the data covariance matrix from a raw data file. Computes from a set of samples from the raw
     data
@@ -225,12 +224,6 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
             assert datr.flags.c_contiguous
             CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
         CC = cp.median(CCall, axis=0)
-    # output a qc picture of the covariance matrix
-    if qc_path is not None:
-        fig = plt.figure()
-        plt.imshow(20 * np.log10(np.abs(CC.get())), vmin=0, vmax=60), plt.colorbar()
-        fig.savefig(Path(qc_path).joinpath('qc_covariance_matrix.png'))
-        fig.close()
     return CC
 
 
@@ -243,17 +236,15 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     :param params:
     :param kwargs: get_data_covariance_matrix kwargs
     """
-    whiteningRange = params.whiteningRange
-    scaleproc = params.scaleproc
 
     Nchan = probe.Nchan
-    CC = get_data_covariance_matrix(raw_data, params, probe, qc_path=qc_path)
+    CC = get_data_covariance_matrix(raw_data, params, probe)
 
     if params.do_whitening:
-        if whiteningRange < np.inf:
+        if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
             # in the estimation of the covariance
-            whiteningRange = min(whiteningRange, Nchan)
+            whiteningRange = min(params.whiteningRange, Nchan)
             # this function performs the same matrix inversions as below, just on subsets of
             # channels around each channel
             Wrot = whiteningLocal(CC, probe.yc, probe.xc, whiteningRange)
@@ -263,7 +254,11 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
         # Do single channel z-scoring instead of whitening
         Wrot = cp.diag(cp.diag(CC) ** (-0.5))
 
-    Wrot = Wrot * scaleproc
+    if qc_path is not None:
+        pykilosort.qc.plot_whitening_matrix(Wrot.get(), out_path=qc_path)
+        pykilosort.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)
+
+    Wrot = Wrot * params.scaleproc
     condition_number = np.linalg.cond(cp.asnumpy(Wrot))
     logger.info(f"Computed the whitening matrix cond = {condition_number}.")
     if condition_number > 50:
