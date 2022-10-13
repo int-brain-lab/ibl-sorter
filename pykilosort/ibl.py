@@ -104,7 +104,10 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.exception("Error in the main loop")
         raise e
     [_logger.removeHandler(h) for h in _logger.handlers]
+    # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_pykilosort.log'))
+    for qc_file in scratch_dir.glob('qc_*.png'):
+        shutil.move(qc_file, ks_output_dir.joinpath(qc_file.name))
 
     # convert the pykilosort output to ALF IBL format
     if alf_path is not None:

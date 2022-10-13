@@ -13,6 +13,9 @@ import one.alf.io as alfio
 from brainbox.metrics.single_units import spike_sorting_metrics
 from viewephys.gui import viewephys
 
+from iblutil.util import get_logger
+logger = get_logger(__name__)
+
 
 def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
                      raster_plot=True, raw_plots=True, summary_stats=True,

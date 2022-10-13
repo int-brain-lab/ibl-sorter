@@ -1,11 +1,12 @@
 import logging
 from math import ceil
-from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from scipy.signal import butter
 import cupy as cp
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 from .cptools import lfilter, median
 from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
@@ -170,7 +171,18 @@ def whiteningLocal(CC, yc, xc, nRange):
     return Wrot
 
 
-def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None):
+def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None, qc_path=None):
+    """
+    Computes the data covariance matrix from a raw data file. Computes from a set of samples from the raw
+    data
+    :param raw_data:
+    :param params:
+    :param probe:
+    :param nSkipCov: for the orginal kilosort2, number of batches to skip between samples
+    :param preprocessing_function: if 'destriping' uses Neuropixel destriping function to apply to the data before
+    computing the covariance matrix
+    :return:
+    """
     preprocessing_function = preprocessing_function or params.preprocessing_function
     if preprocessing_function == 'destriping':
         # takes 25 samples of 500ms from 10 seconds to t -25s
@@ -178,9 +190,16 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
         t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
         for icc, t0 in enumerate(tqdm(t0s)):
             s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
+            # for the destriping, we need to detect the bad channels which requires working in Volts
             raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=True) / probe['sample2volt']
+            channel_labels, _ = detect_bad_channels(raw, params.fs)
+            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=channel_labels) / probe['sample2volt']
             CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
+            # remove the bad channels from the covariance matrix, those get only divided by their rms
+            CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
+            CCall[icc, channel_labels > 0, :] = 0
+            CCall[icc, :, channel_labels > 0] = 0
+            CCall[icc, channel_labels > 0, channel_labels > 0] = datr[channel_labels > 0, :].std(axis=1) ** 2
         CC = cp.asarray(np.median(CCall, axis=0))
     else:
         nSkipCov = nSkipCov or params.nSkipCov
@@ -206,27 +225,29 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
             assert datr.flags.c_contiguous
             CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
         CC = cp.median(CCall, axis=0)
+    # output a qc picture of the covariance matrix
+    if qc_path is not None:
+        fig = plt.figure()
+        plt.imshow(20 * np.log10(np.abs(CC.get())), vmin=0, vmax=60), plt.colorbar()
+        fig.savefig(Path(qc_path).joinpath('qc_covariance_matrix.png'))
+        fig.close()
     return CC
 
 
-def get_whitening_matrix(raw_data=None, probe=None, params=None, nSkipCov=None):
+def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     """
     based on a subset of the data, compute a channel whitening matrix
     this requires temporal filtering first (gpufilter)
+    :param raw_data:
+    :param probe:
+    :param params:
+    :param kwargs: get_data_covariance_matrix kwargs
     """
     whiteningRange = params.whiteningRange
     scaleproc = params.scaleproc
 
     Nchan = probe.Nchan
-    CC = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov)
-    # CCks2 = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov, preprocessing_function='ks2')
-
-    # import matplotlib.pyplot as plt
-    # CCks2 = get_data_covariance_matrix(raw_data, params, probe, nSkipCov=nSkipCov, preprocessing_function='ks2')
-    # plt.figure()
-    # plt.imshow(20 * np.log10(np.abs(CC)), vmin=0, vmax=60), plt.colorbar()
-    # plt.figure()
-    # plt.imshow(20 * np.log10(np.abs(CCks2.get())), vmin=0, vmax=60),  plt.colorbar()
+    CC = get_data_covariance_matrix(raw_data, params, probe, qc_path=qc_path)
 
     if params.do_whitening:
         if whiteningRange < np.inf:

@@ -127,7 +127,7 @@ def run(
         # of the data
         with ctx.time("whitening_matrix"):
             ir.Wrot = get_whitening_matrix(
-                raw_data=raw_data, probe=probe, params=params
+                raw_data=raw_data, probe=probe, params=params, qc_path=ctx_path
             )
         # Cache the result.
         ctx.write(Wrot=ir.Wrot)
