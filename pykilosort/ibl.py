@@ -84,6 +84,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
     add_default_handler(level=log_level)
     add_default_handler(level=log_level, filename=log_file)
+    session_scratch_dir = scratch_dir.joinpath('.kilosort', bin_file.name)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
@@ -95,8 +96,8 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
-        # move back the QC files to the original probe folder
-        for qc_file in scratch_dir.joinpath(".kilosort", bin_file.name).glob('_iblqc_*'):
+        # move back the QC files to the original probe folder for registration
+        for qc_file in session_scratch_dir.glob('_iblqc_*'):
             shutil.copy(qc_file, bin_file.parent.joinpath(qc_file.name))
         if delete:
             shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
@@ -106,7 +107,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     [_logger.removeHandler(h) for h in _logger.handlers]
     # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_pykilosort.log'))
-    for qc_file in scratch_dir.glob('qc_*.png'):
+    for qc_file in session_scratch_dir.glob('_pyksqc_*.png'):
         shutil.move(qc_file, ks_output_dir.joinpath(qc_file.name))
 
     # convert the pykilosort output to ALF IBL format

@@ -239,7 +239,6 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
 
     Nchan = probe.Nchan
     CC = get_data_covariance_matrix(raw_data, params, probe)
-
     if params.do_whitening:
         if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
@@ -251,8 +250,9 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
         else:
             Wrot = whiteningFromCovariance(CC)
     else:
-        # Do single channel z-scoring instead of whitening
+        # Do individual channel z-scoring instead of whitening
         Wrot = cp.diag(cp.diag(CC) ** (-0.5))
+        # Wrot = cp.eye(CC.shape[0]) * np.median(cp.diag(CC) ** (-0.5))  # same value for all channels
 
     if qc_path is not None:
         pykilosort.qc.plot_whitening_matrix(Wrot.get(), out_path=qc_path)
@@ -264,6 +264,7 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     if condition_number > 50:
         logger.warning("high conditioning of the whitening matrix can result in noisy and poor results")
     return Wrot
+
 
 def get_good_channels(raw_data=None, probe=None, params=None):
     """
