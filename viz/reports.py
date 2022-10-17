@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy.signal
 from neurodsp import voltage
 from neurodsp.utils import rms
@@ -14,7 +13,18 @@ from brainbox.metrics.single_units import spike_sorting_metrics
 from viewephys.gui import viewephys
 
 from iblutil.util import get_logger
+from iblutil.numerical import ismember
 logger = get_logger(__name__)
+
+
+def make_raster_plot(spike_times, spike_depths, nclusters, label='raster', out_path=None, raster_start=0.0, raster_len=1200.0):
+    fig, ax = plt.subplots(figsize=(16, 9))
+    bbplot.driftmap(spike_times, spike_depths, t_bin=0.007, d_bin=10, vmax=0.5, ax=ax)
+    title_str = f"{spike_times.size:_} spikes, {nclusters:_} clusters"
+    ax.title.set_text(title_str)
+    ax.set_xlim(raster_start, raster_start + raster_len), ax.set_ylim(0, 3800)
+    fig.savefig(out_path.joinpath(f"{label}.png"))
+    plt.close(fig)
 
 
 def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
@@ -82,13 +92,12 @@ def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
             json.dump(summary, outfile)
 
     if raster_plot:
-        fig, ax = plt.subplots(figsize=(16, 9))
-        bbplot.driftmap(spikes.times, spikes.depths, t_bin=0.007, d_bin=10, vmax=0.5, ax=ax)
-        title_str = f"{spikes.clusters.size:_} spikes, {clusters.depths.size:_} clusters"
-        ax.title.set_text(title_str)
-        ax.set_xlim(raster_start, raster_start+raster_len), ax.set_ylim(0, 3800)
-        fig.savefig(out_path.joinpath("raster.png"))
-        plt.close(fig)
+        make_raster_plot(spikes.times, spikes.depths, nclusters=clusters.depths.size, label='raster',
+                    out_path=out_path, raster_start=raster_start, raster_len=raster_len)
+        good_clusters = df_units.loc[df_units['label'] == 1, ['cluster_id']].to_numpy().flatten()
+        good_spikes, _ = ismember(spikes.clusters, good_clusters)
+        make_raster_plot(spikes.times[good_spikes], spikes.depths[good_spikes], nclusters=good_clusters.size,
+                         label='raster_good_units', out_path=out_path, raster_start=raster_start, raster_len=raster_len)
 
     if raw_plots:
         if bin_file is None:
