@@ -183,7 +183,7 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
     :return:
     """
     preprocessing_function = preprocessing_function or params.preprocessing_function
-    if preprocessing_function == 'destriping':
+    if preprocessing_function == 'destriping' and params.normalisation != "original":
         # takes 25 samples of 500ms from 10 seconds to t -25s
         CCall = np.zeros((25, probe.Nchan, probe.Nchan))
         t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
@@ -239,7 +239,8 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
 
     Nchan = probe.Nchan
     CC = get_data_covariance_matrix(raw_data, params, probe)
-    if params.do_whitening:
+    logger.info(f"Data nomralisation using {params.normalisation} method")
+    if params.normalisation in ['whitening', 'original']:
         if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
             # in the estimation of the covariance
@@ -249,11 +250,11 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
             Wrot = whiteningLocal(CC, probe.yc, probe.xc, whiteningRange)
         else:
             Wrot = whiteningFromCovariance(CC)
-    else:
+    elif params.normalisation == 'zscore':
         # Do individual channel z-scoring instead of whitening
         Wrot = cp.diag(cp.diag(CC) ** (-0.5))
-        # Wrot = cp.eye(CC.shape[0]) * np.median(cp.diag(CC) ** (-0.5))  # same value for all channels
-
+    elif params.normalisation == 'global_zscore':
+        Wrot = cp.eye(CC.shape[0]) * np.median(cp.diag(CC) ** (-0.5))  # same value for all channels
     if qc_path is not None:
         pykilosort.qc.plot_whitening_matrix(Wrot.get(), out_path=qc_path)
         pykilosort.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)

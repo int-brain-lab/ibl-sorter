@@ -75,8 +75,11 @@ class KilosortParams(BaseModel):
     
     perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
 
-    do_whitening: bool = Field(True, description='whether or not to whiten data, if disabled \
-                                                 channels are individually z-scored')
+    normalisation: str = Field('whitening', description=
+    'Normalisation strategy. Choices are: '
+    '"whitening": uses the inverse of the covariance matrix,'
+    '"zscore": uses individual channel normalisation,'
+    '"global zscore" for median channel normalisation')
 
     fs: float = Field(30000.0, description="sample rate")
 
