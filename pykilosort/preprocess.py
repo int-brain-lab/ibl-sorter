@@ -3,12 +3,13 @@ from math import ceil
 
 import numpy as np
 from scipy.signal import butter
+import scipy.stats
 import cupy as cp
 from tqdm.auto import tqdm
 
 import pykilosort.qc
 from .cptools import lfilter, median
-from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
+from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels, interpolate_bad_channels
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +156,6 @@ def whiteningLocal(CC, yc, xc, nRange):
     # yc and xc are vector of Y and X positions of each channel
     # nRange is the number of nearest channels to consider
     Wrot = cp.zeros((CC.shape[0], CC.shape[0]))
-
     for j in range(CC.shape[0]):
         ds = (xc - xc[j]) ** 2 + (yc - yc[j]) ** 2
         ilocal = np.argsort(ds)
@@ -185,20 +185,28 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
     preprocessing_function = preprocessing_function or params.preprocessing_function
     if preprocessing_function == 'destriping' and params.normalisation != "original":
         # takes 25 samples of 500ms from 10 seconds to t -25s
+        good_channels = probe.good_channels
         CCall = np.zeros((25, probe.Nchan, probe.Nchan))
         t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
-        for icc, t0 in enumerate(tqdm(t0s)):
+        # on the second pass, apply destriping to the data
+        for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
             s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
-            # for the destriping, we need to detect the bad channels which requires working in Volts
             raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-            channel_labels, _ = detect_bad_channels(raw, params.fs)
-            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=channel_labels) / probe['sample2volt']
+            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channels_labels) / probe['sample2volt']
+            assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
             CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
             # remove the bad channels from the covariance matrix, those get only divided by their rms
             CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
-            CCall[icc, channel_labels > 0, :] = 0
-            CCall[icc, :, channel_labels > 0] = 0
-            CCall[icc, channel_labels > 0, channel_labels > 0] = datr[channel_labels > 0, :].std(axis=1) ** 2
+            CCall[icc, ~probe.good_channels, :] = 0
+            CCall[icc, :, ~probe.good_channels] = 0
+            # we stabilize the covariance matrix this is not trivial:
+            # first remove all cross terms belonging to the bad channels
+            median_std = np.median(np.diag(CCall[icc, :, :])[good_channels])
+            # channels flagged as noisy (label=1) and dead (label=2) are interpolated
+            replace_diag = np.interp(np.where(~good_channels)[0], np.where(good_channels)[0], np.diag(CCall[icc, :, :])[good_channels])
+            CCall[icc, ~good_channels, ~good_channels] = replace_diag
+            # the channels outside of the brain (label=3) are willingly excluded and stay with the high values above
+            CCall[icc, probe.channels_labels == 3, probe.channels_labels == 3] = median_std * 1e6
         CC = cp.asarray(np.median(CCall, axis=0))
     else:
         nSkipCov = nSkipCov or params.nSkipCov
@@ -236,10 +244,9 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     :param params:
     :param kwargs: get_data_covariance_matrix kwargs
     """
-
     Nchan = probe.Nchan
     CC = get_data_covariance_matrix(raw_data, params, probe)
-    logger.info(f"Data nomralisation using {params.normalisation} method")
+    logger.info(f"Data normalisation using {params.normalisation} method")
     if params.normalisation in ['whitening', 'original']:
         if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
@@ -256,18 +263,50 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     elif params.normalisation == 'global_zscore':
         Wrot = cp.eye(CC.shape[0]) * np.median(cp.diag(CC) ** (-0.5))  # same value for all channels
     if qc_path is not None:
-        pykilosort.qc.plot_whitening_matrix(Wrot.get(), out_path=qc_path)
+        pykilosort.qc.plot_whitening_matrix(Wrot.get(), good_channels=probe.good_channels, out_path=qc_path)
         pykilosort.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)
-
     Wrot = Wrot * params.scaleproc
-    condition_number = np.linalg.cond(cp.asnumpy(Wrot))
+    condition_number = np.linalg.cond(cp.asnumpy(Wrot)[probe.good_channels, :][:, probe.good_channels])
     logger.info(f"Computed the whitening matrix cond = {condition_number}.")
     if condition_number > 50:
         logger.warning("high conditioning of the whitening matrix can result in noisy and poor results")
     return Wrot
 
 
-def get_good_channels(raw_data=None, probe=None, params=None):
+def get_good_channels(raw_data, probe, params, method='kilosort', **kwargs):
+    if method == 'raw_correlations':
+        return get_good_channels_raw_correlations(raw_data, probe, params, **kwargs)
+    else:
+        return get_good_channels_kilosort(raw_data, probe, params)
+
+
+def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return_labels=False):
+    """
+    Detect bad channels using the method described in IBL whitepaper
+    :param raw_data:
+    :param params:
+    :param probe:
+    :param t0s:
+    :return:
+    """
+    if t0s is None:
+        t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
+    channel_labels = np.zeros((probe.Nchan, t0s.size))
+    for icc, t0 in enumerate(tqdm(t0s, desc="Auto-detection of noisy channels")):
+        s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
+        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
+        channel_labels[:, icc], _ = detect_bad_channels(raw, params.fs)
+    channel_labels = scipy.stats.mode(channel_labels, axis=1)[0].squeeze()
+    logger.info(f"Detected {np.sum(channel_labels == 1)} dead channels")
+    logger.info(f"Detected {np.sum(channel_labels == 2)} noise channels")
+    logger.info(f"Detected {np.sum(channel_labels == 3)} uppermost channels outside of the brain")
+    if return_labels:
+        return channel_labels == 0, channel_labels
+    else:
+        return channel_labels == 0
+
+
+def get_good_channels_kilosort(raw_data=None, probe=None, params=None):
     """
     of the channels indicated by the user as good (chanMap)
     further subset those that have a mean firing rate above a certain value

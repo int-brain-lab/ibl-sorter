@@ -131,14 +131,15 @@ def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
         for view, name in zip(views, view_names):
             eqc = viewephys(view, fs=sr.fs, title=f'{name}')
             if pykilosort_path:
-                # Plot good spikes in green
-                eqc.ctrl.add_scatter(slice_df[slice_df['labels'] == 1]['times'],
-                                     slice_df[slice_df['labels'] == 1]['channels'], (50, 205, 50, 200),
-                                     label='spikes_good')
                 # Plot not good spikes in red
                 eqc.ctrl.add_scatter(slice_df[slice_df['labels'] != 1]['times'],
                                      slice_df[slice_df['labels'] != 1]['channels'], (255, 0, 0, 200),
                                      label='spikes_bad')
+                # Plot good spikes in green
+                eqc.ctrl.add_scatter(slice_df[slice_df['labels'] == 1]['times'],
+                                     slice_df[slice_df['labels'] == 1]['channels'], (50, 205, 50, 200),
+                                     label='spikes_good')
+
             eqc.ctrl.set_gain(25)
             eqc.resize(1960, 1200)
             eqc.viewBox_seismic.setYRange(0, raw.shape[1])

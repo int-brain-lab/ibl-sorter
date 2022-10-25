@@ -152,6 +152,7 @@ def probe_geometry(bin_file):
     probe.y = h['y']
     probe.shank = h['shank']
     probe.kcoords = np.zeros(nc)
+    probe.channel_labels = np.zeros(nc, dtype=int)
     probe.sample_shift = h['sample_shift']
     probe.h, probe.neuropixel_version, probe.sample2volt = (h, ver, s2v)
     return probe
