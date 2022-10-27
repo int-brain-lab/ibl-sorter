@@ -136,7 +136,7 @@ def my_sum(S1, sig, varargin=None):
     return S1
 
 
-def whiteningFromCovariance(CC):
+def whiteningFromCovariance(CC, epsilon=1e-6):
     # function Wrot = whiteningFromCovariance(CC)
     # takes as input the matrix CC of channel pairwise correlations
     # outputs a symmetric rotation matrix (also Nchan by Nchan) that rotates
@@ -144,13 +144,12 @@ def whiteningFromCovariance(CC):
 
     # covariance eigendecomposition (same as svd for positive-definite matrix)
     E, D, _ = cp.linalg.svd(CC)
-    eps = 1e-6
-    Di = cp.diag(1. / (D + eps) ** .5)
+    Di = cp.diag(1. / (D + epsilon) ** .5)
     Wrot = cp.dot(cp.dot(E, Di), E.T)  # this is the symmetric whitening matrix (ZCA transform)
     return Wrot
 
 
-def whiteningLocal(CC, yc, xc, nRange):
+def whiteningLocal(CC, yc, xc, nRange, epsilon=1e-6):
     # function to perform local whitening of channels
     # CC is a matrix of Nchan by Nchan correlations
     # yc and xc are vector of Y and X positions of each channel
@@ -163,7 +162,7 @@ def whiteningLocal(CC, yc, xc, nRange):
         # First channel in this list will always be the primary channel.
         ilocal = ilocal[:nRange]
 
-        wrot0 = cp.asnumpy(whiteningFromCovariance(CC[np.ix_(ilocal, ilocal)]))
+        wrot0 = cp.asnumpy(whiteningFromCovariance(CC[np.ix_(ilocal, ilocal)], epsilon=epsilon))
         # the first column of wrot0 is the whitening filter for the primary channel
         Wrot[ilocal, j] = wrot0[:, 0]
 
@@ -248,15 +247,16 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     CC = get_data_covariance_matrix(raw_data, params, probe)
     logger.info(f"Data normalisation using {params.normalisation} method")
     if params.normalisation in ['whitening', 'original']:
+        epsilon = np.mean(np.diag(CC)[probe.good_channels]) * 1e-3 if params.normalisation == ['whitening'] else 1e-6
         if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
             # in the estimation of the covariance
             whiteningRange = min(params.whiteningRange, Nchan)
             # this function performs the same matrix inversions as below, just on subsets of
             # channels around each channel
-            Wrot = whiteningLocal(CC, probe.yc, probe.xc, whiteningRange)
+            Wrot = whiteningLocal(CC, probe.yc, probe.xc, whiteningRange, epsilon=epsilon)
         else:
-            Wrot = whiteningFromCovariance(CC)
+            Wrot = whiteningFromCovariance(CC, epsilon=epsilon)
     elif params.normalisation == 'zscore':
         # Do individual channel z-scoring instead of whitening
         Wrot = cp.diag(cp.diag(CC) ** (-0.5))
@@ -265,6 +265,7 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     if qc_path is not None:
         pykilosort.qc.plot_whitening_matrix(Wrot.get(), good_channels=probe.good_channels, out_path=qc_path)
         pykilosort.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)
+
     Wrot = Wrot * params.scaleproc
     condition_number = np.linalg.cond(cp.asnumpy(Wrot)[probe.good_channels, :][:, probe.good_channels])
     logger.info(f"Computed the whitening matrix cond = {condition_number}.")
