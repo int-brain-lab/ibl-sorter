@@ -32,12 +32,8 @@ def run(
 ):
     """Launch KiloSort 2.
 
-    probe has the following attributes:
-    - xc
-    - yc
-    - kcoords
-    - Nchan
-
+    stop_after: str
+        Stop after the given step. Possible values are: whitening_matrix, preprocess, drift_correction, learn, merge, split_1, cutoff
     """
 
     # Get or create the probe object.
