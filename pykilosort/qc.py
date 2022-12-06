@@ -14,7 +14,7 @@ def plot_covariance_matrix(covariance_matrix, out_path):
     ax.set(title="Data covariance matrix", ylabel='Channel', xlabel='Channel')
     plt.imshow(20 * np.log10(np.abs(covariance_matrix)), vmin=0, vmax=60), plt.colorbar()
     if out_path is not None:
-        fig.savefig(Path(out_path).joinpath('_pyksqc_.covariance_matrix.png'))
+        fig.savefig(Path(out_path).joinpath('_iblqc_.covariance_matrix.png'))
         plt.close(fig)
     else:
         return fig, ax
@@ -40,7 +40,7 @@ def plot_whitening_matrix(wrot, whitening_range=32, out_path=None, good_channels
     ax.set(title=f"Whitening matrix diagonals, conditioning {cond}", ylabel='Channel', xlabel='Channel')
     plt.imshow(qc_diag, vmin=-.1, vmax=.1, cmap='PuOr'), plt.colorbar(location='bottom')
     if out_path is not None:
-        fig.savefig(Path(out_path).joinpath('_pyksqc_.whitening_matrix.png'))
+        fig.savefig(Path(out_path).joinpath('_iblqc_.whitening_matrix.png'))
         plt.close(fig)
     else:
         return fig, ax
