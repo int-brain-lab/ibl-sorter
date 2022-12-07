@@ -4,7 +4,7 @@ matplotlib
 mock
 numba
 numpy
-ibl-neuropixel
+ibl-neuropixel >=0.4.0
 phylib
 pydantic
 pytest

@@ -1,3 +1,8 @@
+# 1.4
+### 1.4.0
+- stabilisation of the covariance matrix prior whitening computation
+- add QC outputs of the preprocessing phase
+
 # 1.3
 ## 1.3.3
 -   change integration tests infrastructure

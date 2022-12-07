@@ -84,6 +84,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
     add_default_handler(level=log_level)
     add_default_handler(level=log_level, filename=log_file)
+    session_scratch_dir = scratch_dir.joinpath('.kilosort', bin_file.stem)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
@@ -95,15 +96,16 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
-        # move back the QC files to the original probe folder
-        for qc_file in scratch_dir.joinpath(".kilosort", bin_file.name).glob('_iblqc_*'):
-            shutil.copy(qc_file, bin_file.parent.joinpath(qc_file.name))
+        # move back the QC files to the original probe folder for registration
+        for qc_file in session_scratch_dir.rglob('_iblqc_.*'):
+            shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
         if delete:
             shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
     [_logger.removeHandler(h) for h in _logger.handlers]
+    # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_pykilosort.log'))
 
     # convert the pykilosort output to ALF IBL format
@@ -114,11 +116,11 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
 
 
 def ibl_pykilosort_params(bin_file):
-
     params = KilosortParams()
     params.preprocessing_function = 'destriping'
     params.probe = probe_geometry(bin_file)
     params.minFR = 0
+    params.minfr_goodchannels = 0
     # params = {k: dict(params)[k] for k in sorted(dict(params))}
     return dict(params)
 
@@ -130,17 +132,14 @@ def probe_geometry(bin_file):
     """
     if isinstance(bin_file, list):
         sr = spikeglx.Reader(bin_file[0])
-        h = sr.geometry
-        ver = sr.major_version
+        h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     elif isinstance(bin_file, str) or isinstance(bin_file, Path):
         sr = spikeglx.Reader(bin_file)
-        h = sr.geometry
-        ver = sr.major_version
+        h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     else:
         print(bin_file)
         assert(bin_file == 1 or bin_file == 2)
-        h = neuropixel.trace_header(version=bin_file)
-        ver = bin_file
+        h, ver, s2v = (neuropixel.trace_header(version=bin_file), bin_file, 2.34375e-06)
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1
@@ -151,9 +150,9 @@ def probe_geometry(bin_file):
     probe.y = h['y']
     probe.shank = h['shank']
     probe.kcoords = np.zeros(nc)
-    probe.neuropixel_version = ver
+    probe.channel_labels = np.zeros(nc, dtype=int)
     probe.sample_shift = h['sample_shift']
-    probe.h = h
+    probe.h, probe.neuropixel_version, probe.sample2volt = (h, ver, s2v)
     return probe
 
 

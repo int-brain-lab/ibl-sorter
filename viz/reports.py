@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy.signal
 from neurodsp import voltage
 from neurodsp.utils import rms
@@ -13,10 +12,25 @@ import one.alf.io as alfio
 from brainbox.metrics.single_units import spike_sorting_metrics
 from viewephys.gui import viewephys
 
+from iblutil.util import get_logger
+from iblutil.numerical import ismember
+logger = get_logger(__name__)
+
+
+def make_raster_plot(spike_times, spike_depths, nclusters, label='raster', out_path=None, raster_start=0.0,
+                     raster_len=1200.0, vmax=0.5, d_bin=10, t_bin=0.007):
+    fig, ax = plt.subplots(figsize=(16, 9))
+    bbplot.driftmap(spike_times, spike_depths, t_bin=t_bin, d_bin=d_bin, vmax=vmax, ax=ax)
+    title_str = f"{spike_times.size:_} spikes, {nclusters:_} clusters"
+    ax.title.set_text(title_str)
+    ax.set_xlim(raster_start, raster_start + raster_len), ax.set_ylim(0, 3800)
+    fig.savefig(out_path.joinpath(f"{label}.png"))
+    plt.close(fig)
+
 
 def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
                      raster_plot=True, raw_plots=True, summary_stats=True,
-                     raster_start=0., raster_len=1200., raw_start=600., raw_len=0.04):
+                     raster_start=0., raster_len=1200., raw_start=600., raw_len=0.04, vmax=0.5, d_bin=10, t_bin=0.007):
     """
     Function to create plots and statistics for basic qc of spike sorting results. Depending on inputs creates
     a raster plot, three snapshots of the "raw" data - after butterworth filtering, destriping and whitening -
@@ -79,18 +93,18 @@ def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
             json.dump(summary, outfile)
 
     if raster_plot:
-        fig, ax = plt.subplots(figsize=(16, 9))
-        bbplot.driftmap(spikes.times, spikes.depths, t_bin=0.007, d_bin=10, vmax=0.5, ax=ax)
-        title_str = f"{spikes.clusters.size:_} spikes, {clusters.depths.size:_} clusters"
-        ax.title.set_text(title_str)
-        ax.set_xlim(raster_start, raster_start+raster_len), ax.set_ylim(0, 3800)
-        fig.savefig(out_path.joinpath("raster.png"))
-        plt.close(fig)
+        make_raster_plot(spikes.times, spikes.depths, nclusters=clusters.depths.size, label='raster',
+                         out_path=out_path, raster_start=raster_start, raster_len=raster_len,
+                         vmax=vmax, d_bin=d_bin, t_bin=t_bin)
+        good_clusters = df_units.loc[df_units['label'] == 1, ['cluster_id']].to_numpy().flatten()
+        good_spikes, _ = ismember(spikes.clusters, good_clusters)
+        make_raster_plot(spikes.times[good_spikes], spikes.depths[good_spikes], nclusters=good_clusters.size,
+                         label='raster_good_units', out_path=out_path, raster_start=raster_start, raster_len=raster_len,
+                         vmax=vmax, d_bin=d_bin, t_bin=t_bin)
 
     if raw_plots:
         if bin_file is None:
             raise IOError('If raw_plots=True a bin_file must be passed')
-        from viewephys.gui import viewephys
         # Load a slice of raw data
         sr = spikeglx.Reader(bin_file)
         start = int(raw_start * sr.fs)
@@ -120,15 +134,16 @@ def qc_plots_metrics(bin_file=None, pykilosort_path=None, out_path=None,
         for view, name in zip(views, view_names):
             eqc = viewephys(view, fs=sr.fs, title=f'{name}')
             if pykilosort_path:
-                # Plot good spikes in green
-                eqc.ctrl.add_scatter(slice_df[slice_df['labels'] == 1]['times'],
-                                     slice_df[slice_df['labels'] == 1]['channels'], (50, 205, 50, 200),
-                                     label='spikes_good')
                 # Plot not good spikes in red
                 eqc.ctrl.add_scatter(slice_df[slice_df['labels'] != 1]['times'],
-                                     slice_df[slice_df['labels'] != 1]['channels'], (255, 0, 0, 200),
+                                     slice_df[slice_df['labels'] != 1]['channels'], (255, 0, 0, 100),
                                      label='spikes_bad')
-            eqc.ctrl.set_gain(25)
+                # Plot good spikes in green
+                eqc.ctrl.add_scatter(slice_df[slice_df['labels'] == 1]['times'],
+                                     slice_df[slice_df['labels'] == 1]['channels'], (50, 205, 50, 100),
+                                     label='spikes_good')
+
+            eqc.ctrl.set_gain(30)
             eqc.resize(1960, 1200)
             eqc.viewBox_seismic.setYRange(0, raw.shape[1])
             eqc.grab().save(str(out_path.joinpath(f"{name}.png")))
