@@ -7,7 +7,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
- - python >= 3.8  # TODO: Currently doesn't work for Python 3.10
+ - python >= 3.8, <3.11  # numba currently doesn't support 3.11
  - ipython
  - scipy
  - numpy
@@ -30,3 +30,4 @@ dependencies:
     - phylib
     - spikeinterface
     - ibllib
+    - numba

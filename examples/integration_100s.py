@@ -3,10 +3,10 @@ from pathlib import Path
 import numpy as np
 
 import pykilosort
-from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
+from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 
-INTEGRATION_DATA_PATH = Path("/datadisk/Data/spike_sorting/pykilosort_tests")
-INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests")
+INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/spike_sorting/integration_test")
+# INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests")
 
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
 shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
@@ -45,7 +45,7 @@ run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR, params=p
 
 if DELETE == False:
     import shutil
-    working_directory = SCRATCH_DIR.joinpath('.kilosort', bin_file.name)
+    working_directory = SCRATCH_DIR.joinpath('.kilosort', bin_file.stem)
     pre_proc_file = working_directory.joinpath('proc.dat')
     intermediate_directory = ks_output_dir.joinpath('intermediate')
     intermediate_directory.mkdir(exist_ok=True)
