@@ -1,4 +1,6 @@
 # 1.4
+### 1.4.1
+- bugfix: normalisation factor if `whitening` is used in pre-processing
 ### 1.4.0
 - stabilisation of the covariance matrix prior whitening computation
 - add QC outputs of the preprocessing phase

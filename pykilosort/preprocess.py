@@ -248,7 +248,7 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     CC = get_data_covariance_matrix(raw_data, params, probe)
     logger.info(f"Data normalisation using {params.normalisation} method")
     if params.normalisation in ['whitening', 'original']:
-        epsilon = np.mean(np.diag(CC)[probe.good_channels]) * 1e-3 if params.normalisation == ['whitening'] else 1e-6
+        epsilon = np.mean(np.diag(CC)[probe.good_channels]) * 1e-3 if params.normalisation == 'whitening' else 1e-6
         if params.whiteningRange < np.inf:
             #  if there are too many channels, a finite whiteningRange is more robust to noise
             # in the estimation of the covariance
