@@ -97,7 +97,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
 
         run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
         # move back the QC files to the original probe folder for registration
-        for qc_file in session_scratch_dir.rglob('_iblqc_.*'):
+        for qc_file in session_scratch_dir.rglob('_iblqc_*'):
             shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
         if delete:
             shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)

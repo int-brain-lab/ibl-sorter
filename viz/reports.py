@@ -12,9 +12,9 @@ import one.alf.io as alfio
 from brainbox.metrics.single_units import spike_sorting_metrics
 from viewephys.gui import viewephys
 
-from iblutil.util import get_logger
+from iblutil.util import setup_logger
 from iblutil.numerical import ismember
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 def make_raster_plot(spike_times, spike_depths, nclusters, label='raster', out_path=None, raster_start=0.0,
