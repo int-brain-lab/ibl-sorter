@@ -92,7 +92,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Starting Pykilosort version {__version__}")
 +       _logger.info(f"Scratch dir {scratch_dir}")
 +       _logger.info(f"Output dir {ks_output_dir}")
-+       _logger.info(f"Data dir {bin_file.parent")
++       _logger.info(f"Data dir {bin_file.parent}")
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
