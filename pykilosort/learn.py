@@ -400,7 +400,7 @@ def mexMPnu8(Params, dataRAW, U, W, mu, iC, iW, UtU, iList, wPCA, params):
     d_mu = cp.asarray(mu, dtype=np.float32, order="F")
     d_iC = cp.asarray(iC, dtype=np.int32, order="F")
     d_iW = cp.asarray(iW, dtype=np.int32, order="F")
-    d_UtU = cp.asarray(UtU, dtype=np.bool, order="F")
+    d_UtU = cp.asarray(UtU, dtype=bool, order="F")
     d_iList = cp.asarray(iList, dtype=np.int32, order="F")
     d_wPCA = cp.asarray(wPCA, dtype=np.float32, order="F")
 
