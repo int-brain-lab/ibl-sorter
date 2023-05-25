@@ -15,6 +15,7 @@ from .io.probes import np1_probe, np2_probe, np2_4shank_probe
 
 __version__ = '1.4.3'
 
+
 # Set a null handler on the root logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
