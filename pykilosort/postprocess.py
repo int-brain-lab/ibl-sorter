@@ -1241,7 +1241,7 @@ def checkClusters(ctx):
 
     ir = ctx.intermediate
     n_templates = ir.Wphy.shape[1]
-    ids = cp.asnumpy(np.unique(ir.st3[:, 1]).astype(np.int))
+    ids = cp.asnumpy(np.unique(ir.st3[:, 1]).astype(int))
     # Check if the max cluster id is equal to the number of cluster ids assigned to spikes.
     if n_templates != len(ids):  # see which cluster ids are missing
         good_units_mask = np.isin(np.arange(n_templates), ids)
