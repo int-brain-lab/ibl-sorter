@@ -6,7 +6,7 @@ import pykilosort
 from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 
 INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/spike_sorting/integration_test")
-# INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests")
+# INTEGRATION_DATA_PATH = Path("/mnt/s1/spikesorting/integration_tests")
 
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
 shutil.rmtree(SCRATCH_DIR, ignore_errors=True)

@@ -357,7 +357,7 @@ def mexClustering2(Params, uproj, W, mu, call, iMatch, iC):
     d_mu = cp.asarray(mu, dtype=np.float32, order='F')
     d_call = cp.asarray(call, dtype=np.int32, order='F')
     d_iC = cp.asarray(iC, dtype=np.int32, order='F')
-    d_iMatch = cp.asarray(iMatch, dtype=np.bool, order='F')
+    d_iMatch = cp.asarray(iMatch, dtype=bool, order='F')
 
     d_dWU = cp.zeros((NrankPC * Nchan, Nfilters), dtype=np.float32, order='F')
     d_cmax = cp.zeros((Nspikes, Nfilters), dtype=np.float32, order='F')
@@ -398,7 +398,7 @@ def mexDistances2(Params, Ws, W, iMatch, iC, Wh, mus, mu):
 
     d_Ws = cp.asarray(Ws, dtype=np.float32, order='F')
     d_W = cp.asarray(W, dtype=np.float32, order='F')
-    d_iMatch = cp.asarray(iMatch, dtype=np.bool, order='F')
+    d_iMatch = cp.asarray(iMatch, dtype=bool, order='F')
     d_iC = cp.asarray(iC, dtype=np.int32, order='F')
     d_Wh = cp.asarray(Wh, dtype=np.int32, order='F')
     d_mu = cp.asarray(mu, dtype=np.float32, order='F')
