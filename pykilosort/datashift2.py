@@ -14,9 +14,6 @@ from .utils import get_cuda, Bunch
 
 logger = logging.getLogger(__name__)
 
-print("cp paths")
-print(cp.__path__)
-print(cp.__file__)
 
 def getClosestChannels2(ycup, xcup, yc, xc, NchanClosest):
     # this function outputs the closest channels to each channel,
