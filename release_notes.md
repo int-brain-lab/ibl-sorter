@@ -1,4 +1,6 @@
 # 1.4
+### 1.4.3
+- make pykilosort compatible with spikeglx 2023-04
 ### 1.4.1
 - bugfix: normalisation factor if `whitening` is used in pre-processing
 ### 1.4.0
