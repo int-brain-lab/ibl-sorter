@@ -41,6 +41,7 @@ setup(
     version=version,
     license="BSD",
     description='Python port of KiloSort 2',
+    long_description_content_type="text/markdown",
     long_description=readme,
     author='Cyrille Rossant',
     author_email='cyrille.rossant@gmail.com',
