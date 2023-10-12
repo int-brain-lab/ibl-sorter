@@ -308,7 +308,7 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
         return channel_labels == 0
 
 
-def get_good_channels_kilosort(raw_data=None, probe=None, params=None):
+def get_good_channels_kilosort(raw_data=None, params=None, probe=None):
     """
     of the channels indicated by the user as good (chanMap)
     further subset those that have a mean firing rate above a certain value
