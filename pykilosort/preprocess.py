@@ -275,7 +275,9 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     return Wrot
 
 
-def get_good_channels(raw_data, probe, params, method='kilosort', **kwargs):
+def get_good_channels(raw_data, probe, params, **kwargs):
+    if "detect_channels_method" in params:
+        method = params["detect_channels_method"]
     if method == 'raw_correlations':
         return get_good_channels_raw_correlations(raw_data, probe, params, **kwargs)
     else:
@@ -308,14 +310,20 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
         return channel_labels == 0
 
 
-def get_good_channels_kilosort(raw_data=None, params=None, probe=None):
+def get_good_channels_kilosort(raw_data=None, params=None, probe=None, return_labels=False):
     """
-    of the channels indicated by the user as good (chanMap)
+    Of the channels indicated by the user as good (chanMap), 
     further subset those that have a mean firing rate above a certain value
     (default is ops.minfr_goodchannels = 0.1Hz)
-    needs the same filtering parameters in ops as usual
+    Needs the same filtering parameters in ops as usual
     also needs to know where to start processing batches (twind)
-    and how many channels there are in total (NchanTOT)
+    and how many channels there are in total (NchanTOT).
+    
+    :param raw_data: Raw data loader from the main PyKS loop.
+    :param params: Params object for this PyKS run.
+    :param probe: Probe identified for this recording.
+    :param return_labels: Whether to return channel labels 
+        (0 for good, 1 for dead, etc.)
     """
     fs = params.fs
     fshigh = params.fshigh
@@ -387,7 +395,11 @@ def get_good_channels_kilosort(raw_data=None, params=None, probe=None):
     logger.info('Found %d threshold crossings in %2.2f seconds of data.' % (k, ttime))
     logger.info('Found %d/%d bad channels.' % (np.sum(~igood), len(igood)))
 
-    return igood
+    if return_labels:
+        labels = (~igood).astype(int) # mark channels as dead (code 1)
+        return igood, labels
+    else:
+        return igood
 
 
 def get_Nbatch(raw_data, params):

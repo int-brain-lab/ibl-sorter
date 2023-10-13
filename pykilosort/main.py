@@ -92,12 +92,13 @@ def run(
     probe.Nchan = len(probe.chanMap)
     # keep all channels but still output a quality control metric. Also the covariance matrix will be stabilized
     # by taking into account those noisy channels
-    probe.good_channels = get_good_channels(
-        raw_data, params, probe, method='kilosort', return_labels=True)
+
+    # channel detection method is either "raw_correlations" or "kilosort" based on the "detect_channels_method"
+    # entry in params
+    probe.good_channels, probe.channels_labels = get_good_channels(
+        raw_data, params, probe, return_labels=True)
     assert probe.Nchan > 0
     
-    probe.channels_labels = (~probe.good_channels).astype(int)
-
     # upper bound on the number of templates we can have
     params.Nfilt = params.nfilt_factor * probe.Nchan
 
