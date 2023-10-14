@@ -93,8 +93,8 @@ def run(
     # keep all channels but still output a quality control metric. Also the covariance matrix will be stabilized
     # by taking into account those noisy channels
 
-    # channel detection method is either "raw_correlations" or "kilosort" based on the "detect_channels_method"
-    # entry in params
+    # channel detection method is either "raw_correlations" or "kilosort" based on the
+    # "channel_detection_method" field in params
     probe.good_channels, probe.channels_labels = get_good_channels(
         raw_data, params, probe, return_labels=True)
     assert probe.Nchan > 0
