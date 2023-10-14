@@ -71,6 +71,9 @@ class KilosortParams(BaseModel):
     preprocessing_function: str = Field('kilosort2', description='pre-processing function used choices'
                                                                  'are "kilosort2" or "destriping"')
     
+    channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
+                                                                     'are "raw_correlations" or "kilosort"')
+    
     save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
     
     perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
