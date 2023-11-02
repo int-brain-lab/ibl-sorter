@@ -275,13 +275,17 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     return Wrot
 
 
-def get_good_channels(raw_data, probe, params, **kwargs):
-    if "detect_channels_method" in params:
-        method = params["detect_channels_method"]
-    if method == 'raw_correlations':
-        return get_good_channels_raw_correlations(raw_data, probe, params, **kwargs)
+def get_good_channels(raw_data, params, probe, **kwargs):
+    """
+    Wrapper for two choices of channel detection: 'raw_correlations' and
+    'kilosort'. Passes kwargs through to 
+    individual methods.
+    """
+    method = params.channel_detection_method
+    if method == "raw_correlations":
+        return get_good_channels_raw_correlations(raw_data, params, probe, **kwargs)
     else:
-        return get_good_channels_kilosort(raw_data, probe, params)
+        return get_good_channels_kilosort(raw_data, params, probe, **kwargs)
 
 
 def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return_labels=False):
@@ -310,7 +314,7 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
         return channel_labels == 0
 
 
-def get_good_channels_kilosort(raw_data=None, params=None, probe=None, return_labels=False):
+def get_good_channels_kilosort(raw_data, params, probe, return_labels=False):
     """
     Of the channels indicated by the user as good (chanMap), 
     further subset those that have a mean firing rate above a certain value
