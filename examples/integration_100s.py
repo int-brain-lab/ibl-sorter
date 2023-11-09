@@ -1,6 +1,5 @@
 import shutil
 from pathlib import Path
-import numpy as np
 
 import pykilosort
 from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
@@ -11,7 +10,7 @@ INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/spike_sorting/integratio
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
 shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
 SCRATCH_DIR.mkdir(exist_ok=True)
-DELETE = False  # delete the intermediate run products, if False they'll be copied over
+DELETE = True  # delete the intermediate run products, if False they'll be copied over
 # bin_file = INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin")
 #
 # label = "zscore"
@@ -44,7 +43,6 @@ run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR, params=p
                       ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='DEBUG')
 
 if DELETE == False:
-    import shutil
     working_directory = SCRATCH_DIR.joinpath('.kilosort', bin_file.stem)
     pre_proc_file = working_directory.joinpath('proc.dat')
     intermediate_directory = ks_output_dir.joinpath('intermediate')
