@@ -13,7 +13,7 @@ from .main import run, run_export, run_spikesort, run_preprocess
 from .io.probes import np1_probe, np2_probe, np2_4shank_probe
 
 
-__version__ = '1.4.7'
+__version__ = '1.5.0'
 
 
 # Set a null handler on the root logger
