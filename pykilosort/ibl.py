@@ -121,8 +121,8 @@ def ibl_pykilosort_params(bin_file):
     params.preprocessing_function = 'destriping'
     params.channel_detection_method = 'raw_correlations'
     params.probe = probe_geometry(bin_file)
-    params.minFR = 0
-    params.minfr_goodchannels = 0
+    # params.minFR = 0
+    # params.minfr_goodchannels = 0
     # params = {k: dict(params)[k] for k in sorted(dict(params))}
     return dict(params)
 
