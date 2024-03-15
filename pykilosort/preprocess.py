@@ -192,7 +192,7 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
         for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
             s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
             raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channels_labels) / probe['sample2volt']
+            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels) / probe['sample2volt']
             assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
             CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
             # remove the bad channels from the covariance matrix, those get only divided by their rms
@@ -206,7 +206,7 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
             replace_diag = np.interp(np.where(~good_channels)[0], np.where(good_channels)[0], np.diag(CCall[icc, :, :])[good_channels])
             CCall[icc, ~good_channels, ~good_channels] = replace_diag
             # the channels outside of the brain (label=3) are willingly excluded and stay with the high values above
-            CCall[icc, probe.channels_labels == 3, probe.channels_labels == 3] = median_std * 1e6
+            CCall[icc, probe.channel_labels == 3, probe.channel_labels == 3] = median_std * 1e6
         CC = cp.asarray(np.median(CCall, axis=0))
     else:
         nSkipCov = nSkipCov or params.nSkipCov

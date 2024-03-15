@@ -1,3 +1,8 @@
+# 1.5
+### 1.5.1 bugfix
+- `probes.channel_labels` was referenced in plural in some parts of the code
+### 1.5.0
+- set minFR to 0.02 Hz to avoid too many near empty clusters
 # 1.4
 ### 1.4.5
 - make pykilosort compatible with spikeglx 2023-04
