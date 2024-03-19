@@ -10,7 +10,7 @@ from tqdm.auto import tqdm
 
 import pykilosort.qc
 from .cptools import lfilter, median
-from neurodsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
+from ibldsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
 
 logger = logging.getLogger(__name__)
 

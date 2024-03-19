@@ -7,7 +7,9 @@ numpy
 ibl-neuropixel >=0.8.0
 phylib
 pydantic
+pyfftw
 pytest
 scipy
 spikeinterface
 tqdm
+viewephys

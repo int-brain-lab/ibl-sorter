@@ -2,7 +2,7 @@ import spikeglx
 from pykilosort.preprocess import get_data_covariance_matrix
 from pykilosort import ibl, run
 from pykilosort import params
-from neurodsp import voltage
+from ibldsp import voltage
 params = ibl.ibl_pykilosort_params(1)
 probe = params['probe']
 
