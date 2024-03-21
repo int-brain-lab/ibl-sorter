@@ -81,6 +81,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     bin_file = _get_multi_parts_records(bin_file)
     scratch_dir.mkdir(exist_ok=True, parents=True)
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
+    ks_output_dir.mkdir(exist_ok=True, parents=True)
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
     add_default_handler(level=log_level)
     add_default_handler(level=log_level, filename=log_file)
