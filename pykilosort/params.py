@@ -68,9 +68,6 @@ class KilosortParams(BaseModel):
     
     seed: t.Optional[int] = Field(42, description="seed for deterministic output")
     
-    preprocessing_function: str = Field('kilosort2', description='pre-processing function used choices'
-                                                                 'are "kilosort2" or "destriping"')
-    
     channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
                                                                      'are "raw_correlations" or "kilosort"')
     
