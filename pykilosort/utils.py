@@ -405,12 +405,14 @@ class DataLoader(object):
         """Returns the number of batches in the dataset"""
         return int(self.data.shape[0] / self.batch_size)
 
-    def load_batch(self, batch_number, batch_length=None, rescale=True):
+    def load_batch(self, batch_number, batch_length=None, rescale=True, overlap_samples=0):
         """
         Loads a batch and optionally rescales it and move it to the GPU
         :param batch_number: Specifies which batch to load
         :param batch_length: Optional int, length of batch in time samples
         :param rescale: If true, rescales and moves the batch to the GPU
+        :param overlap_samples: Number of time samples to load as overlap at the
+                                beginning of the batch
         :return: Loaded batch
         """
         if not batch_length:
@@ -423,9 +425,22 @@ class DataLoader(object):
         #assert batch_number < self.n_batches, \
         #    f'Batch {batch_number} is out of range for data with {self.n_batches} batches'
 
-        batch_cpu = self.data[batch_number * batch_size : (batch_number + 1) * batch_size].reshape(
-            (-1, self.n_channels), order='C'
-        )
+        i = batch_number * batch_size
+        j = (batch_number + 1) * batch_size
+
+        # [CR 2024-04-02]: add support for optional overlap at the beginning of the batch
+        if overlap_samples > 0:
+            overlap_samples = int(overlap_samples)
+
+            # quick consistency check: the overlap should be smaller than the batch length
+            assert overlap_samples > 0 and overlap_samples <= batch_size // self.n_channels
+
+            i -= overlap_samples * self.n_channels
+            i = max(0, i)
+        assert i >= 0
+        assert j >= i
+
+        batch_cpu = self.data[i:j].reshape((-1, self.n_channels), order='C')
 
         if not rescale:
             return np.asfortranarray(batch_cpu)
@@ -434,6 +449,8 @@ class DataLoader(object):
             cp.asarray(batch_cpu, dtype=np.float32) / self.scaling_factor
         )
 
+        # [CR 2024-04-02]: batch_gpu's shape should be (NT + overlap, n_channels), but the overlap
+        # may be lower than overlap_samples if we are in the first batch
         return batch_gpu
 
     def write_batch(self, batch_number, batch_data):
