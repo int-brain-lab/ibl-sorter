@@ -412,7 +412,7 @@ class DataLoader(object):
         :param batch_length: Optional int, length of batch in time samples
         :param rescale: If true, rescales and moves the batch to the GPU
         :param overlap_samples: Number of time samples to load as overlap at the
-                                beginning of the batch
+                                beginning and end of the batch
         :return: Loaded batch
         """
         if not batch_length:
@@ -436,9 +436,14 @@ class DataLoader(object):
             assert overlap_samples > 0 and overlap_samples <= batch_size // self.n_channels
 
             i -= overlap_samples * self.n_channels
-            i = max(0, i)
+            j += overlap_samples * self.n_channels
+
+        i = max(0, i)
+        j = min(self.data.shape[0], j)
+
         assert i >= 0
         assert j >= i
+        assert j <= self.data.shape[0]
 
         batch_cpu = self.data[i:j].reshape((-1, self.n_channels), order='C')
 
