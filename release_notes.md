@@ -1,3 +1,7 @@
+# 1.6
+### 1.6a.dev0
+-   outputs `probe.channels.npy` via phylib forced update
+
 # 1.5
 ### 1.5.1 bugfix
 - `probes.channel_labels` was referenced in plural in some parts of the code

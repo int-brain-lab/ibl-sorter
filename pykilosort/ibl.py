@@ -101,8 +101,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         # move back the QC files to the original probe folder for registration
         for qc_file in session_scratch_dir.rglob('_iblqc_*'):
             shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
-        if delete:
-            shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
@@ -115,6 +113,12 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         s2v = _sample2v(bin_file)
         alf_path.mkdir(exist_ok=True, parents=True)
         spikes.ks2_to_alf(ks_output_dir, bin_file, alf_path, ampfactor=s2v)
+        # move all of the QC outputs to the alf folder as well
+        for qc_file in scratch_dir.rglob('_iblqc_*.png'):
+            shutil.move(qc_file, alf_path.joinpath(qc_file.name))
+    # in production, we remove all of the temporary files after the run
+    if delete:
+        shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
 
 
 def ibl_pykilosort_params(bin_file):
