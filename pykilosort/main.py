@@ -22,7 +22,7 @@ def default_probe(raw_data):
 
 
 def run(
-    dat_path: str = None,
+    dat_path: str | list | Path | None = None,
     dir_path: Path = None,
     output_dir: Path = None,
     probe=None,
@@ -51,8 +51,8 @@ def run(
     assert probe
 
     # dir path
-    if type(dat_path) == list:
-        dir_path = dir_path or Path(dat_path[0]).parent
+    if isinstance(dat_path, list):
+        dir_path = Path(dat_path[0]).parent
     else:
         dir_path = dir_path or Path(dat_path).parent
     assert isinstance(dir_path, (PurePath, str)), 'dir_path must be a string or Path object'

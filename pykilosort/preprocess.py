@@ -1,6 +1,6 @@
 import logging
 from math import ceil
-import matplotlib.pyplot as plt
+from pathlib import Path
 
 import numpy as np
 from scipy.signal import butter
@@ -444,11 +444,12 @@ def destriping(ctx):
                 ns2add = ceil(ns / ctx.params.NT) * ctx.params.NT - ns
             else:
                 ns2add = 0
-            decompress_destripe_cbin(bin_file, append=i > 0, ns2add=ns2add, **kwargs)
-    else:
+            decompress_destripe_cbin(bin_file, append=i > 0, ns2add=ns2add, output_qc_path=bin_file.parent, **kwargs)
+    else:  # in the case of cbin IBL files
         assert raw_data.raw_data.n_parts == 1
+        bin_file = Path(raw_data.raw_data.name)
         ns2add = ceil(raw_data.n_samples / ctx.params.NT) * ctx.params.NT - raw_data.n_samples
-        decompress_destripe_cbin(raw_data.raw_data.name, ns2add=ns2add, **kwargs)
+        decompress_destripe_cbin(bin_file, ns2add=ns2add, output_qc_path=bin_file.parent, **kwargs)
 
 
 def preprocess(ctx):

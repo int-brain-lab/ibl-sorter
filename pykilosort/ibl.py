@@ -97,7 +97,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
-        run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
         # move back the QC files to the original probe folder for registration
         for qc_file in session_scratch_dir.rglob('_iblqc_*'):
             shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
@@ -114,6 +114,8 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         alf_path.mkdir(exist_ok=True, parents=True)
         spikes.ks2_to_alf(ks_output_dir, bin_file, alf_path, ampfactor=s2v)
         # move all of the QC outputs to the alf folder as well
+        for qc_file in scratch_dir.rglob('_iblqc_*.png'):
+            shutil.move(qc_file, alf_path.joinpath(qc_file.name))
         for qc_file in scratch_dir.rglob('_iblqc_*.png'):
             shutil.move(qc_file, alf_path.joinpath(qc_file.name))
     # in production, we remove all of the temporary files after the run
