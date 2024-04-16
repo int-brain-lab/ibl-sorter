@@ -1,9 +1,12 @@
 click
+colorcet
 cupy
 matplotlib
 mock
 numba
 numpy
+h5py
+hdbscan
 ibl-neuropixel >= 0.8.0
 phylib >= 2.5.0
 pydantic
