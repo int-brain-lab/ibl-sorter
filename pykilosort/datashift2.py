@@ -5,8 +5,12 @@ import os
 from tqdm.auto import tqdm, trange
 import numpy as np
 import cupy as cp
+import dartsort
+from dredge import dredge_ap
 from scipy.interpolate import Akima1DInterpolator
 from scipy.sparse import coo_matrix
+import spikeinterface.full as si
+import torch
 
 from .postprocess import my_conv2_cpu
 from .learn import extractTemplatesfromSnippets
@@ -534,6 +538,62 @@ def standalone_detector(wTEMP, wPCA, NrankPC, yup, xup, Nbatch, data_loader, pro
     return spikes
 
 
+def dartsort_detector(ctx, probe, params):
+
+    rec = si.read_binary(
+        ctx.intermediate.proc_path, params.fs, params.data_dtype, params.Nchan
+    )
+    geom = np.c_[probe.x, probe.y]
+    rec.set_dummy_probe_from_locations(geom)
+    rec = rec.astype("float32")
+    rec = si.scale(rec, gain=1./200)
+
+    Wrot = ctx.intermediate.Wrot
+    rec = si.whiten(rec, W=np.linalg.inv(Wrot))
+    rec = si.zscore(rec, mode="mean+std", num_chunks_per_segment=100)
+
+    channel_index = torch.tensor(dartsort.make_channel_index(geom, 100.0))
+    pipeline = dartsort.WaveformPipeline(
+                (
+                    dartsort.transform.SingleChannelWaveformDenoiser(channel_index),
+                    dartsort.transform.Localization(channel_index, torch.tensor(geom)),
+                    dartsort.transform.MaxAmplitude(name_prefix="denoised"),
+                )
+            )
+
+    peeler = dartsort.peel.ThresholdAndFeaturize(
+                rec,
+                detection_threshold=6,
+                chunk_length_samples=4 * int(rec.sampling_frequency),
+                max_spikes_per_chunk=4 * 10_000,
+                channel_index=channel_index,
+                featurization_pipeline=pipeline,
+                n_chunks_fit=100,
+                spatial_dedup_channel_index=torch.tensor(
+                    dartsort.make_channel_index(geom, 75.0)
+                ),
+            )
+    peeler.load_or_fit_and_save_models(
+                ctx.context_path / "thresholding_models", n_jobs=8
+            )
+    st = peeler.peel(
+                ctx.context_path / "thresholding.h5",
+                n_jobs=8,
+            )
+    
+    spikes = Bunch()
+    
+    margin = 20
+    z = st.point_source_localizations[:, 2]
+    valid = z == z.clip(geom[:, 1].min() - margin, geom[:, 1].max() + margin)
+    
+    spikes.depths = z[valid][:]
+    spikes.amps = st.denoised_ptp_amplitudes[valid][:]
+    spikes.times = st.times_seconds[valid][:]
+
+    return spikes
+
+
 def get_drift(spikes, probe, Nbatches, nblocks=5, genericSpkTh=10):
     """
     Estimates the drift using the spiking activity found in the first pass through the data
@@ -594,6 +654,25 @@ def get_drift(spikes, probe, Nbatches, nblocks=5, genericSpkTh=10):
     return dshift, yblk
 
 
+def get_dredge_drift(spikes, params):
+    
+    motion_est, _ = dredge_ap.register(
+        spikes.amps,
+        spikes.depths,
+        spikes.times,
+        bin_s=params.NT / params.fs,
+        gaussian_smoothing_sigma_s=params.NT / params.fs,
+        weights_threshold_low=0.5,
+        weights_threshold_high=0.5,
+        mincorr=0.5,
+    )
+    
+    dshift = -motion_est.displacement.T
+    yblk = motion_est.spatial_bin_centers_um
+    
+    return dshift, yblk
+
+
 def datashift2(ctx):
     """
     Main function to re-register the preprocessed data
@@ -638,10 +717,12 @@ def datashift2(ctx):
 
     # Extract all the spikes across the recording that are captured by the
     # generic templates. Very few real spikes are missed in this way.
-    spikes = standalone_detector(
-        wTEMP, wPCA, params.nPCs, yup, xup, Nbatch, ir.data_loader, probe, params
-    )
-
+    # spikes = standalone_detector(
+    #     wTEMP, wPCA, params.nPCs, yup, xup, Nbatch, ir.data_loader, probe, params
+    # )
+    
+    spikes = dartsort_detector(ctx, probe, params)
+    
     # from brainbox.plot import driftmap
     # from viewephys.gui import viewephys
     #
@@ -666,6 +747,7 @@ def datashift2(ctx):
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
     dshift, yblk = get_drift(spikes, probe, Nbatch, params.nblocks, params.genericSpkTh)
+    dshift, yblk = get_dredge_drift(spikes, probe, Nbatch, params.nblocks)
 
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))
