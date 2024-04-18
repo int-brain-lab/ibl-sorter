@@ -642,6 +642,21 @@ def datashift2(ctx):
         wTEMP, wPCA, params.nPCs, yup, xup, Nbatch, ir.data_loader, probe, params
     )
 
+    # from brainbox.plot import driftmap
+    # from viewephys.gui import viewephys
+    #
+    # driftmap(spikes['times'] / 30_000, spikes['depths'], plot_style='bincount', vmax=1)
+    # t = 1400
+    #
+    # (-1, ir.data_loader.n_channels)
+    # first, last = int(t * 30_000), int(((t + 1) * 30_000))
+    # whiten = ir.data_loader.data[first * ir.data_loader.n_channels:last * ir.data_loader.n_channels].reshape(-1, ir.data_loader.n_channels)
+    # viewephys(whiten.T, fs=30_000, title='whiten')
+    # ir.data_loader.n_channels
+    #
+    # unwhite = (whiten @ np.linalg.pinv(cp.asnumpy(ir.Wrot) / params.scaleproc)).T
+    # viewephys(unwhite, fs=30_000, title='unwhite')
+
     if params.save_drift_spike_detections:
         drift_path = ctx.context_path / 'drift'
         if not os.path.isdir(drift_path):
