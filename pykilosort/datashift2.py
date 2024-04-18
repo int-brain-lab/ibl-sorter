@@ -541,7 +541,7 @@ def standalone_detector(wTEMP, wPCA, NrankPC, yup, xup, Nbatch, data_loader, pro
 def dartsort_detector(ctx, probe, params):
 
     rec = si.read_binary(
-        ctx.intermediate.proc_path, params.fs, params.data_dtype, params.Nchan
+        ctx.intermediate.proc_path, params.fs, params.data_dtype, probe.Nchan
     )
     geom = np.c_[probe.x, probe.y]
     rec.set_dummy_probe_from_locations(geom)
@@ -549,7 +549,7 @@ def dartsort_detector(ctx, probe, params):
     rec = si.scale(rec, gain=1./200)
 
     Wrot = ctx.intermediate.Wrot
-    rec = si.whiten(rec, W=np.linalg.inv(Wrot))
+    rec = si.whiten(rec, W=np.linalg.pinv(Wrot))
     rec = si.zscore(rec, mode="mean+std", num_chunks_per_segment=100)
 
     channel_index = torch.tensor(dartsort.make_channel_index(geom, 100.0))
@@ -685,35 +685,35 @@ def datashift2(ctx):
 
     ir.xc, ir.yc = probe.xc, probe.yc
 
-    # The min and max of the y and x ranges of the channels
-    ymin = min(ir.yc)
-    ymax = max(ir.yc)
-    xmin = min(ir.xc)
-    xmax = max(ir.xc)
+#     # The min and max of the y and x ranges of the channels
+#     ymin = min(ir.yc)
+#     ymax = max(ir.yc)
+#     xmin = min(ir.xc)
+#     xmax = max(ir.xc)
 
-    # Determine the average vertical spacing between channels.
-    # Usually all the vertical spacings are the same, i.e. on Neuropixels probes.
-    dmin = np.median(np.diff(np.unique(ir.yc)))
-    logger.info(f"pitch is {dmin} um")
-    yup = np.arange(
-        start=ymin, step=dmin / 2, stop=ymax + (dmin / 2)
-    )  # centers of the upsampled y positions
+#     # Determine the average vertical spacing between channels.
+#     # Usually all the vertical spacings are the same, i.e. on Neuropixels probes.
+#     dmin = np.median(np.diff(np.unique(ir.yc)))
+#     logger.info(f"pitch is {dmin} um")
+#     yup = np.arange(
+#         start=ymin, step=dmin / 2, stop=ymax + (dmin / 2)
+#     )  # centers of the upsampled y positions
 
-    # Determine the template spacings along the x dimension
-    x_range = xmax - xmin
-    npt = floor(
-        x_range / 16
-    )  # this would come out as 16um for Neuropixels probes, which aligns with the geometry.
-    xup = np.linspace(xmin, xmax, npt + 1)  # centers of the upsampled x positions
+#     # Determine the template spacings along the x dimension
+#     x_range = xmax - xmin
+#     npt = floor(
+#         x_range / 16
+#     )  # this would come out as 16um for Neuropixels probes, which aligns with the geometry.
+#     xup = np.linspace(xmin, xmax, npt + 1)  # centers of the upsampled x positions
 
     # Set seed
     if params.seed:
         np.random.seed(params.seed)
 
     # determine prototypical timecourses by clustering of simple threshold crossings.
-    wTEMP, wPCA = extractTemplatesfromSnippets(
-        data_loader=ir.data_loader, probe=probe, params=params, Nbatch=Nbatch
-    )
+    # wTEMP, wPCA = extractTemplatesfromSnippets(
+    #     data_loader=ir.data_loader, probe=probe, params=params, Nbatch=Nbatch
+    # )
 
     # Extract all the spikes across the recording that are captured by the
     # generic templates. Very few real spikes are missed in this way.
@@ -746,8 +746,15 @@ def datashift2(ctx):
         np.save(drift_path / 'spike_depths.npy', spikes.depths)
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
-    dshift, yblk = get_drift(spikes, probe, Nbatch, params.nblocks, params.genericSpkTh)
-    dshift, yblk = get_dredge_drift(spikes, probe, Nbatch, params.nblocks)
+    #dshift, yblk = get_drift(spikes, probe, Nbatch, params.nblocks, params.genericSpkTh)
+    dshift, yblk = get_dredge_drift(spikes, params)
+    
+    if params.save_drift_estimates:
+        drift_path = ctx.context_path / 'drift'
+        if not os.path.isdir(drift_path):
+            os.mkdir(drift_path)
+        np.save(drift_path / 'dshift.npy', dshift)
+        np.save(drift_path / 'yblk.npy', yblk)
 
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))

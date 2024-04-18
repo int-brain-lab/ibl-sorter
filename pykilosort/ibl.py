@@ -63,7 +63,7 @@ def _sample2v(ap_file):
 
 
 def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
-                          ks_output_dir=None, alf_path=None, log_level='INFO', params=None):
+                          ks_output_dir=None, alf_path=None, log_level='INFO', stop_after=None, params=None):
     """
     This runs the spike sorting and outputs the raw pykilosort without ALF conversion
     :param bin_file: binary file full path
@@ -97,7 +97,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
-        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, stop_after=stop_after, **params)
         # move back the QC files to the original probe folder for registration
         for qc_file in session_scratch_dir.rglob('_iblqc_*'):
             shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))

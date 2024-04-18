@@ -76,6 +76,8 @@ class KilosortParams(BaseModel):
     
     save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
     
+    save_drift_estimates: bool = Field(False, description='save estimated probe drift')
+    
     perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
 
     normalisation: str = Field('whitening', description=
