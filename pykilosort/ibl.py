@@ -126,6 +126,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
 def ibl_pykilosort_params(bin_file):
     params = KilosortParams()
     params.channel_detection_method = 'raw_correlations'
+    params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
     return dict(params)
 
