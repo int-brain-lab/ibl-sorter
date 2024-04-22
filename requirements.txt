@@ -1,12 +1,11 @@
 click
-colorcet
 cupy
+dartsort @ git+https://github.com/cwindolf/dartsort@main
+dredge @ git+https://github.com/evarol/dredge@main
 matplotlib
 mock
 numba
 numpy
-h5py
-hdbscan
 ibl-neuropixel >= 0.8.0
 phylib >= 2.5.0
 pydantic
