@@ -6,7 +6,7 @@ matplotlib
 mock
 numba
 numpy
-ibl-neuropixel >= 0.8.0
+ibl-neuropixel @ git+https://github.com/int-brain-lab/ibl-neuropixel@saturation
 phylib >= 2.5.0
 pydantic
 pyfftw
