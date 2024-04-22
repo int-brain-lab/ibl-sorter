@@ -431,13 +431,12 @@ def shift_batch_on_disk2(
 
 def dartsort_detector(ctx, probe, params):
 
+    # load preprocessed data via spikeinterface
     rec = si.read_binary(
         ctx.intermediate.proc_path, params.fs, params.data_dtype, probe.Nchan
     )
     geom = np.c_[probe.x, probe.y]
 
-    # load preprocessed data via spikeinterface
-    rec = si.read_binary(pid_raw_path.joinpath("proc.dat"), 30_000, "int16", 384)
     rec.set_dummy_probe_from_locations(geom)
     rec = rec.astype("float32")
     ns = rec.get_total_samples()
@@ -446,10 +445,10 @@ def dartsort_detector(ctx, probe, params):
     # ignore OOB channels prior to computing a pseudoinverse of Wrot
     Wrot = ctx.intermediate.Wrot
     W = np.eye(384)
-    oob = channel_labels != 3.
+    oob = probe.channel_labels != 3.
     idx = np.ix_(oob, oob)
     W[idx] = np.linalg.pinv(Wrot[idx])
-    W *= gain
+    W /= params.scaleproc
 
     # transform the data to standard units via z-scoring, i.e. Z = (X-MU)/STDEV
     # estimate the STDEV and MU vectors from chunks throughout recording
@@ -460,7 +459,7 @@ def dartsort_detector(ctx, probe, params):
     for icc, t0 in enumerate(tqdm(t0s)):
         s0, s1 = int(t0 * params.fs), int((t0 + 0.4) * params.fs)
         # z-scoring is after unwhitening
-        chunk = W @ o_rec.get_traces(0, s0, s1).T
+        chunk = W @ rec.get_traces(0, s0, s1).T
         stds[icc, :] = np.std(chunk, axis=1)
         mus[icc, :] = np.mean(chunk, axis=1)
 
@@ -469,7 +468,7 @@ def dartsort_detector(ctx, probe, params):
 
     W[idx] /= std[oob]
 
-    rec = si.whiten(o_rec, W=W, M=mu, apply_mean=True)
+    rec = si.whiten(rec, W=W, M=mu, apply_mean=True)
 
     # now run DARTsort thresholding to get spike times, amps, positions
     channel_index = torch.tensor(dartsort.make_channel_index(geom, 100.0))
@@ -496,10 +495,12 @@ def dartsort_detector(ctx, probe, params):
     peeler.load_or_fit_and_save_models(
                 ctx.context_path / "thresholding_models", n_jobs=8
             )
-    st = peeler.peel(
-                ctx.context_path / "thresholding.h5",
-                n_jobs=8,
-            )
+    peeler.peel(
+            ctx.context_path / "thresholding.h5",
+            n_jobs=8,
+        )
+    
+    st = dartsort.DARTsortSorting.from_peeling_hdf5(ctx.context_path / "thresholding.h5")
 
     spikes = Bunch()
 
