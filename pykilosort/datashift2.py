@@ -429,137 +429,57 @@ def shift_batch_on_disk2(
     data_loader.write_batch(ibatch, data_shifted)
 
 
-def standalone_detector(wTEMP, wPCA, NrankPC, yup, xup, Nbatch, data_loader, probe, params):
-    """
-    Detects spikes across the entire recording using generic templates.
-    Each generic template has rank one (in space-time).
-    In time, we use the 1D template prototypes found in wTEMP.
-    In space, we use Gaussian weights of several sizes, centered
-    on (x,y) positions that are part of a super-resolution grid covering the
-    entire probe (pre-specified in the calling function).
-    In total, there ~100x more generic templates than channels.
-    """
-
-    # minimum/base sigma for the Gaussian.
-    sig = 10
-
-    # grid of centers for the generic tempates
-    ycup, xcup = np.meshgrid(yup, xup)
-
-    # Get nearest channels for every template center.
-    # Template products will only be computed on these channels.
-    NchanNear = 10
-    iC, dist = getClosestChannels2(ycup, xcup, probe.yc, probe.xc, NchanNear)
-
-    # Templates with centers that are far from an active site are discarded
-    dNearActiveSite = np.median(np.diff(np.unique(probe.yc)))
-    igood = dist[0, :] < dNearActiveSite
-    iC = iC[:, igood]
-    dist = dist[:, igood]
-    ycup = cp.array(ycup).T.ravel()[igood]
-    xcup = cp.array(xcup).T.ravel()[igood]
-
-    # number of nearby templates to compare for local template maximum
-    NchanNearUp = 10 * NchanNear
-    iC2, dist2 = getClosestChannels2(ycup, xcup, ycup, xcup, NchanNearUp)
-
-    # pregenerate the Gaussian weights used for spatial components
-    nsizes = 5
-    v2 = cp.zeros((5, dist.shape[1]), dtype=np.float32)
-    for ibatch in range(0, nsizes):
-        v2[ibatch, :] = np.sum(np.exp(-2 * (dist ** 2) / (sig * (ibatch + 1)) ** 2), 0)
-
-    # build up Params
-    NchanUp = iC.shape[1]
-    Params = (
-        params.NT,
-        probe.Nchan,
-        params.nt0,
-        NchanNear,
-        NrankPC,
-        params.nt0min,
-        params.genericSpkTh,
-        NchanUp,
-        NchanNearUp,
-        sig,
-    )
-
-    # preallocate the results we assume 50 spikes per channel per second max
-    rl = data_loader.data.shape[0] / params.fs / probe.Nchan   # record length
-    st3 = np.zeros((int(np.ceil(rl * 50 * probe.Nchan)), 5))
-    st3[:, 4] = -1  # batch_id can be zero
-    t0 = 0
-    nsp = 0  # counter for total number of spikes
-
-    pbar = trange(Nbatch, desc="Detecting Spikes, 0 batches, 0 spikes", leave=True)
-    for ibatch in pbar:
-        # get a batch of whitened and filtered data
-        dataRAW = data_loader.load_batch(ibatch)
-
-        # run the CUDA function on this batch
-        dat, kkmax, st, cF = spikedetector3(
-            Params, dataRAW, wTEMP, iC, dist, v2, iC2, dist2
-        )
-        # upsample the y position using the center of mass of template products
-        # coming out of the CUDA function.
-        ys = probe.yc[cp.asnumpy(iC)]
-        cF0 = np.maximum(cF, 0)
-        cF0 = cF0 / np.sum(cF0, 0)
-        iChan = st[1, :]
-        yct = np.sum(cF0 * ys[:, iChan], 0)
-
-        # build st for the current batch
-        st[1, :] = yct
-
-        # add time offset to get correct spike times
-        toff = t0 + params.nt0min + params.NT * ibatch
-        st[0, :] = st[0, :] + toff
-
-        # st[4, :] = k  # add batch number
-        st = np.concatenate([st, np.full((1, st.shape[1]), ibatch)])
-
-        nsp0 = st.shape[1]
-        if nsp0 + nsp > st3.shape[0]:
-            # Pre-allocate more space if needed
-            st3 = np.concatenate((st3, np.zeros((1000000, 5))), axis=0)
-
-        st3[nsp : nsp0 + nsp, :] = st.T
-        nsp = nsp + nsp0
-
-        if ibatch % 10 == 0 or ibatch == (Nbatch - 1):
-            pbar.set_description(f"Detecting Spikes, {ibatch+1} batches, {nsp} spikes", refresh=True)
-
-    spikes = Bunch()
-    spikes.times = st3[:nsp, 0]
-    spikes.depths = st3[:nsp, 1]
-    spikes.amps = st3[:nsp, 2]
-    spikes.batches = st3[:nsp, 4]
-
-    return spikes
-
-
 def dartsort_detector(ctx, probe, params):
 
     rec = si.read_binary(
         ctx.intermediate.proc_path, params.fs, params.data_dtype, probe.Nchan
     )
     geom = np.c_[probe.x, probe.y]
+
+    # load preprocessed data via spikeinterface
+    rec = si.read_binary(pid_raw_path.joinpath("proc.dat"), 30_000, "int16", 384)
     rec.set_dummy_probe_from_locations(geom)
     rec = rec.astype("float32")
-    rec = si.scale(rec, gain=1./200)
+    ns = rec.get_total_samples()
 
+    # un-whiten the data to be fed into the dartsort spike detector
+    # ignore OOB channels prior to computing a pseudoinverse of Wrot
     Wrot = ctx.intermediate.Wrot
-    rec = si.whiten(rec, W=np.linalg.pinv(Wrot))
-    rec = si.zscore(rec, mode="mean+std", num_chunks_per_segment=100)
+    W = np.eye(384)
+    oob = channel_labels != 3.
+    idx = np.ix_(oob, oob)
+    W[idx] = np.linalg.pinv(Wrot[idx])
+    W *= gain
 
+    # transform the data to standard units via z-scoring, i.e. Z = (X-MU)/STDEV
+    # estimate the STDEV and MU vectors from chunks throughout recording
+    nchunk = 25
+    t0s = np.linspace(10, ns / params.fs - 10, nchunk)
+    stds = np.zeros((nchunk, 384))
+    mus = np.zeros((nchunk, 384))
+    for icc, t0 in enumerate(tqdm(t0s)):
+        s0, s1 = int(t0 * params.fs), int((t0 + 0.4) * params.fs)
+        # z-scoring is after unwhitening
+        chunk = W @ o_rec.get_traces(0, s0, s1).T
+        stds[icc, :] = np.std(chunk, axis=1)
+        mus[icc, :] = np.mean(chunk, axis=1)
+
+    std = np.median(stds, axis=0)
+    mu = np.median(mus, axis=0)
+
+    W[idx] /= std[oob]
+
+    rec = si.whiten(o_rec, W=W, M=mu, apply_mean=True)
+
+    # now run DARTsort thresholding to get spike times, amps, positions
     channel_index = torch.tensor(dartsort.make_channel_index(geom, 100.0))
     pipeline = dartsort.WaveformPipeline(
-                (
-                    dartsort.transform.SingleChannelWaveformDenoiser(channel_index),
-                    dartsort.transform.Localization(channel_index, torch.tensor(geom)),
-                    dartsort.transform.MaxAmplitude(name_prefix="denoised"),
-                )
-            )
+        (
+            dartsort.transform.SingleChannelWaveformDenoiser(channel_index),
+            dartsort.transform.Localization(channel_index, torch.tensor(geom)),
+            dartsort.transform.MaxAmplitude(name_prefix="denoised"),
+        )
+    )
 
     peeler = dartsort.peel.ThresholdAndFeaturize(
                 rec,
@@ -580,13 +500,13 @@ def dartsort_detector(ctx, probe, params):
                 ctx.context_path / "thresholding.h5",
                 n_jobs=8,
             )
-    
+
     spikes = Bunch()
-    
+
     margin = 20
     z = st.point_source_localizations[:, 2]
     valid = z == z.clip(geom[:, 1].min() - margin, geom[:, 1].max() + margin)
-    
+
     spikes.depths = z[valid][:]
     spikes.amps = st.denoised_ptp_amplitudes[valid][:]
     spikes.times = st.times_seconds[valid][:]
@@ -682,44 +602,6 @@ def datashift2(ctx):
     raw_data = ctx.raw_data
     ir = ctx.intermediate
     Nbatch = ir.Nbatch
-
-    ir.xc, ir.yc = probe.xc, probe.yc
-
-#     # The min and max of the y and x ranges of the channels
-#     ymin = min(ir.yc)
-#     ymax = max(ir.yc)
-#     xmin = min(ir.xc)
-#     xmax = max(ir.xc)
-
-#     # Determine the average vertical spacing between channels.
-#     # Usually all the vertical spacings are the same, i.e. on Neuropixels probes.
-#     dmin = np.median(np.diff(np.unique(ir.yc)))
-#     logger.info(f"pitch is {dmin} um")
-#     yup = np.arange(
-#         start=ymin, step=dmin / 2, stop=ymax + (dmin / 2)
-#     )  # centers of the upsampled y positions
-
-#     # Determine the template spacings along the x dimension
-#     x_range = xmax - xmin
-#     npt = floor(
-#         x_range / 16
-#     )  # this would come out as 16um for Neuropixels probes, which aligns with the geometry.
-#     xup = np.linspace(xmin, xmax, npt + 1)  # centers of the upsampled x positions
-
-    # Set seed
-    if params.seed:
-        np.random.seed(params.seed)
-
-    # determine prototypical timecourses by clustering of simple threshold crossings.
-    # wTEMP, wPCA = extractTemplatesfromSnippets(
-    #     data_loader=ir.data_loader, probe=probe, params=params, Nbatch=Nbatch
-    # )
-
-    # Extract all the spikes across the recording that are captured by the
-    # generic templates. Very few real spikes are missed in this way.
-    # spikes = standalone_detector(
-    #     wTEMP, wPCA, params.nPCs, yup, xup, Nbatch, ir.data_loader, probe, params
-    # )
     
     spikes = dartsort_detector(ctx, probe, params)
     
@@ -746,7 +628,6 @@ def datashift2(ctx):
         np.save(drift_path / 'spike_depths.npy', spikes.depths)
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
-    #dshift, yblk = get_drift(spikes, probe, Nbatch, params.nblocks, params.genericSpkTh)
     dshift, yblk = get_dredge_drift(spikes, params)
     
     if params.save_drift_estimates:
@@ -759,7 +640,7 @@ def datashift2(ctx):
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))
 
-    # register the data batch by batch
+    # register the data in-place batch by batch
     for ibatch in tqdm(range(Nbatch), desc='Shifting Data'):
 
         # load the batch from binary file
