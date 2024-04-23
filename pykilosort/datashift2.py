@@ -443,7 +443,7 @@ def dartsort_detector(ctx, probe, params):
 
     # un-whiten the data to be fed into the dartsort spike detector
     # ignore OOB channels prior to computing a pseudoinverse of Wrot
-    Wrot = ctx.intermediate.Wrot
+    Wrot = cp.asnumpy(ctx.intermediate.Wrot)
     W = np.eye(384)
     oob = probe.channel_labels != 3.
     idx = np.ix_(oob, oob)
