@@ -583,8 +583,6 @@ def get_dredge_drift(spikes, params):
         spikes.times,
         bin_s=params.NT / params.fs,
         gaussian_smoothing_sigma_s=params.NT / params.fs,
-        weights_threshold_low=0.5,
-        weights_threshold_high=0.5,
         mincorr=0.5,
     )
     
