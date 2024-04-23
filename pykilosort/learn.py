@@ -384,7 +384,7 @@ def mexMPnu8(Params, dataRAW, U, W, mu, iC, iW, UtU, iList, wPCA, params):
     nmaxiter = int(constants.nmaxiter)
     Nthreads = int(constants.Nthreads)
 
-    NT = int(Params[0]) # NT = (unsigned int) Params[0];
+    NT = int(Params[0])  # NT = (unsigned int) Params[0];
     Nfilt = int(Params[1])
     nt0 = int(Params[4])
     Nnearest = int(Params[5])
@@ -862,6 +862,9 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
     Nfilt = params.Nfilt
     Nchan = probe.Nchan
 
+    # [CR 2024-04-02]: add support for optional overlap at the beginning of the batch
+    overlap_samples = params.overlap_samples
+
     # two variables for the same thing? number of nearest channels to each primary channel
     # TODO: unclear - let's fix this
     NchanNear = min(probe.Nchan, 32)
@@ -978,13 +981,38 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
             pm = pmi[ibatch] * ones((Nfilt,), dtype=np.float64, order="F")
 
         # loading a single batch
-        dataRAW = ir.data_loader.load_batch(korder)
+
+        # [CR 2024-04-02]: add overlap when loading the data as a work-round to the spike-hole bug
+        # This is the only place where we use the overlap option of load_batch()
+        overlap = overlap_samples
+        dataRAW = ir.data_loader.load_batch(korder, overlap_samples=overlap)
+        # NOTE: we check the batch size: this will only work if (a) overlap is disabled for the
+        # first batch, and (b) we enforce the overlap to be smaller than the batch size.
+        # NOTE: we assume there are at least 2 batches
+        if korder == 0:
+            assert dataRAW.shape[0] == NT + 1 * overlap
+        elif korder < nBatches - 1:
+            assert dataRAW.shape[0] == NT + 2 * overlap
+        elif korder == nBatches - 1:
+            assert dataRAW.shape[0] <= NT + 2 * overlap
+        else:
+            # NOTE: this should never occur
+            raise ValueError(f"korder = {korder}")
+        # HACK: we need to pass the new data shape to the CUDA functions: this goes via the
+        # first element of the Params array, normally NT, but here it is NT + overlap
+        Params[0] = dataRAW.shape[0]
 
         if ibatch == 0:
             # only on the first batch, we first get a new set of spikes from the residuals,
             # which in this case is the unmodified data because we start with no templates
             # CUDA function to get spatiotemporal clips from spike detections
-            dWU, cmap = mexGetSpikes2(Params, dataRAW, wTEMP, iC)
+
+            # [CR 2024-04-02]: warning, dataRAW contains the overlap, but here, we need to
+            # run this function without the overlap as the CUDA code does not expect it.
+            dataRAW_no_overlap = ir.data_loader.load_batch(korder, overlap_samples=0)
+            assert dataRAW_no_overlap.shape[0] <= NT  # NOTE: might be smaller if last batch
+            Params[0] = dataRAW_no_overlap.shape[0]
+            dWU, cmap = mexGetSpikes2(Params, dataRAW_no_overlap, wTEMP, iC)
 
             dWU = cp.asarray(dWU, dtype=np.float64, order="F")
 
@@ -1041,7 +1069,38 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
             Params, dataRAW, U, W, mu, iC, iW, UtU, iList, wPCA, params
         )
 
-        logger.debug("%d spikes.", x0.size)
+        """
+        [CR 2024-04-02] shape of the output arrays of mexMPnu8
+        (ex: nspikes=3190, nc=384)
+
+        st0: int32      (nspikes,) number of samples since the beginning of the batch
+        id0: int32      (nspikes,) template ID?
+        x0:  float32    (nspikes,)
+        featW: float32  (32, nspikes)
+        dWU0: float64   (61, nc, Y) (ex: Y=140)
+        drez: float32   (65600, nc)
+        nsp0: int32     (Y,)
+        featPC: float32 (32, 3, nspikes)
+        vexp: float32   (nspikes,)
+        """
+
+        # [CR 2024-04-02]: if there was an overlap, we need to remove the spikes in the overlap
+        # area! The following variables depend on nspikes: st0, id0, x0, featW, featPC, vexp
+
+        if overlap > 0:
+            overlap_idx = (overlap < st0) & (st0 < NT + overlap)
+            n_before = len(st0)
+            st0 = st0[overlap_idx] - overlap    # (nspikes,)
+            assert np.all(st0 < NT)
+            n_after = len(st0)
+            logger.info("Removed %d spikes in the overlap", n_before - n_after)
+            id0 = id0[overlap_idx]              # (nspikes,)
+            x0 = x0[overlap_idx]                # (nspikes,)
+            vexp = vexp[overlap_idx]            # (nspikes,)
+            featW = featW[:, overlap_idx]       # (32, nspikes)
+            featPC = featPC[..., overlap_idx]   # (32, 3, nspikes)
+
+        logger.info("Found %d spikes.", x0.size)
 
         # Sometimes nsp can get transposed (think this has to do with it being
         # a single element in one iteration, to which elements are added
@@ -1214,7 +1273,6 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
                     sub_array = cp.asfortranarray(featPC[:, :, id0 == i])
                     feature_writers[i].append(sub_array)
 
-
             ntot = ntot + x0.size  # keeps track of total number of spikes so far
 
         if ibatch % 100 == 0:
@@ -1249,7 +1307,7 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
             writer.close()
 
     # just display the total number of spikes
-    logger.info("Found %d spikes.", ntot)
+    logger.info("Found a total of %d spikes.", ntot)
 
     # Save results to the ctx.intermediate object.
     ir.st3 = np.concatenate(st3, axis=0)

@@ -170,7 +170,7 @@ def whiteningLocal(CC, yc, xc, nRange, epsilon=1e-6):
     return Wrot
 
 
-def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preprocessing_function=None):
+def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None):
     """
     Computes the data covariance matrix from a raw data file. Computes from a set of samples from the raw
     data
@@ -178,60 +178,32 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None, preproces
     :param params:
     :param probe:
     :param nSkipCov: for the orginal kilosort2, number of batches to skip between samples
-    :param preprocessing_function: if 'destriping' uses Neuropixel destriping function to apply to the data before
-    computing the covariance matrix
     :return:
     """
-    preprocessing_function = preprocessing_function or params.preprocessing_function
-    if preprocessing_function == 'destriping' and params.normalisation != "original":
         # takes 25 samples of 500ms from 10 seconds to t -25s
-        good_channels = probe.good_channels
-        CCall = np.zeros((25, probe.Nchan, probe.Nchan))
-        t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
-        # on the second pass, apply destriping to the data
-        for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
-            s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
-            raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-            datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels) / probe['sample2volt']
-            assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
-            CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
-            # remove the bad channels from the covariance matrix, those get only divided by their rms
-            CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
-            CCall[icc, ~probe.good_channels, :] = 0
-            CCall[icc, :, ~probe.good_channels] = 0
-            # we stabilize the covariance matrix this is not trivial:
-            # first remove all cross terms belonging to the bad channels
-            median_std = np.median(np.diag(CCall[icc, :, :])[good_channels])
-            # channels flagged as noisy (label=1) and dead (label=2) are interpolated
-            replace_diag = np.interp(np.where(~good_channels)[0], np.where(good_channels)[0], np.diag(CCall[icc, :, :])[good_channels])
-            CCall[icc, ~good_channels, ~good_channels] = replace_diag
-            # the channels outside of the brain (label=3) are willingly excluded and stay with the high values above
-            CCall[icc, probe.channel_labels == 3, probe.channel_labels == 3] = median_std * 1e6
-        CC = cp.asarray(np.median(CCall, axis=0))
-    else:
-        nSkipCov = nSkipCov or params.nSkipCov
-        Nbatch = get_Nbatch(raw_data, params)
-        NT, NTbuff, ntbuff = (params.NT, params.NTbuff, params.ntbuff)
-        nbatches_cov = np.arange(0, Nbatch, nSkipCov).size
-        CCall = cp.zeros((nbatches_cov, probe.Nchan, probe.Nchan))
-        for icc, ibatch in enumerate(tqdm(range(0, Nbatch, nSkipCov), desc="Computing the whitening matrix")):
-            i = max(0, NT * ibatch - ntbuff)
-            # WARNING: we no longer use Fortran order, so raw_data is nsamples x NchanTOT
-            buff = raw_data[i:i + NTbuff]
-            assert buff.shape[0] > buff.shape[1]
-            assert buff.flags.c_contiguous
-            nsampcurr = buff.shape[0]
-            if nsampcurr < NTbuff:
-                buff = np.concatenate(
-                    (buff, np.tile(buff[nsampcurr - 1], (NTbuff - nsampcurr, 1))), axis=0)
-            buff_g = cp.asarray(buff, dtype=np.float32)
-            # apply filters and median subtraction
-            datr = gpufilter(buff_g, fs=params.fs, fshigh=params.fshigh, chanMap=probe.chanMap)
-            # remove buffers on either side of the data batch
-            datr = datr[ntbuff: NT + ntbuff]
-            assert datr.flags.c_contiguous
-            CCall[icc, :, :] = cp.dot(datr.T, datr) / datr.shape[0]
-        CC = cp.median(CCall, axis=0)
+    good_channels = probe.good_channels
+    CCall = np.zeros((25, probe.Nchan, probe.Nchan))
+    t0s = np.linspace(10, raw_data.shape[0] / params.fs - 10, 25)
+    # on the second pass, apply destriping to the data
+    for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
+        s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
+        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
+        datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels) / probe['sample2volt']
+        assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
+        CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
+        # remove the bad channels from the covariance matrix, those get only divided by their rms
+        CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
+        CCall[icc, ~probe.good_channels, :] = 0
+        CCall[icc, :, ~probe.good_channels] = 0
+        # we stabilize the covariance matrix this is not trivial:
+        # first remove all cross terms belonging to the bad channels
+        median_std = np.median(np.diag(CCall[icc, :, :])[good_channels])
+        # channels flagged as noisy (label=1) and dead (label=2) are interpolated
+        replace_diag = np.interp(np.where(~good_channels)[0], np.where(good_channels)[0], np.diag(CCall[icc, :, :])[good_channels])
+        CCall[icc, ~good_channels, ~good_channels] = replace_diag
+        # the channels outside of the brain (label=3) are willingly excluded and stay with the high values above
+        CCall[icc, probe.channel_labels == 3, probe.channel_labels == 3] = median_std * 1e6
+    CC = cp.asarray(np.median(CCall, axis=0))
     return CC
 
 
@@ -425,7 +397,6 @@ def destriping(ctx):
                   butter_kwargs={'N': 3, 'Wn': ctx.params.fshigh / ctx.params.fs * 2, 'btype': 'highpass'})
 
     logger.info("Pre-processing: applying destriping option to the raw data")
-
     # there are inconsistencies between the mtscomp reader and the flat binary file reader
     # the flat bin reader as an attribute _paths that allows looping on each chunk
     if isinstance(raw_data.raw_data, list):
@@ -450,87 +421,3 @@ def destriping(ctx):
         bin_file = Path(raw_data.raw_data.name)
         ns2add = ceil(raw_data.n_samples / ctx.params.NT) * ctx.params.NT - raw_data.n_samples
         decompress_destripe_cbin(bin_file, ns2add=ns2add, output_qc_path=bin_file.parent, **kwargs)
-
-
-def preprocess(ctx):
-    # function rez = preprocessDataSub(ops)
-    # this function takes an ops struct, which contains all the Kilosort2 settings and file paths
-    # and creates a new binary file of preprocessed data, logging new variables into rez.
-    # The following steps are applied:
-    # 1) conversion to float32
-    # 2) common median subtraction
-    # 3) bandpass filtering
-    # 4) channel whitening
-    # 5) scaling to int16 values
-
-    params = ctx.params
-    probe = ctx.probe
-    raw_data = ctx.raw_data
-    ir = ctx.intermediate
-
-    fs = params.fs
-    fshigh = params.fshigh
-    fslow = params.fslow
-    Nbatch = ir.Nbatch
-    NT = params.NT
-    NTbuff = params.NTbuff
-    ntb = params.ntbuff
-    Nchan = probe.Nchan
-
-    Wrot = cp.asarray(ir.Wrot)
-
-    logger.info("Loading raw data and applying filters.")
-
-    # weights to combine batches at the edge
-    w_edge = cp.linspace(0,1,ntb).reshape(-1, 1)
-    datr_prev = cp.zeros((ntb, Nchan), dtype=np.int32)
-
-    with open(ir.proc_path, 'wb') as fw:  # open for writing processed data
-        for ibatch in tqdm(range(Nbatch), desc="Preprocessing"):
-            # we'll create a binary file of batches of NT samples, which overlap consecutively
-            # on params.ntbuff samples
-            # in addition to that, we'll read another params.ntbuff samples from before and after,
-            # to have as buffers for filtering
-
-            # number of samples to start reading at.
-            i = max(0, NT * ibatch - ntb)
-
-            buff = raw_data[i:i + NTbuff]
-            if buff.size == 0:
-                logger.error("Loaded buffer has an empty size!")
-                break  # this shouldn't really happen, unless we counted data batches wrong
-
-            nsampcurr = buff.shape[0]  # how many time samples the current batch has
-            if nsampcurr < NTbuff:
-                buff = np.concatenate(
-                    (buff, np.tile(buff[nsampcurr - 1], (NTbuff - nsampcurr, 1))), axis=0)
-
-            if i == 0:
-                bpad = np.tile(buff[0], (ntb, 1))
-                buff = np.concatenate((bpad, buff[:NTbuff - ntb]), axis=0)
-
-            # apply filters and median subtraction
-            buff = cp.asarray(buff, dtype=np.float32)
-
-            datr = gpufilter(buff, chanMap=probe.chanMap, fs=fs, fshigh=fshigh, fslow=fslow)
-
-            assert datr.flags.c_contiguous
-
-            datr[ntb:2*ntb] = w_edge * datr[ntb:2*ntb] + (1 - w_edge) * datr_prev
-            datr_prev = datr[NT + ntb: NT + 2*ntb]
-
-            datr = datr[ntb:ntb + NT, :]  # remove timepoints used as buffers
-            datr = cp.dot(datr, Wrot)  # whiten the data and scale by 200 for int16 range
-            assert datr.flags.c_contiguous
-            if datr.shape[0] != NT:
-                raise ValueError(f'Batch {ibatch} processed incorrectly')
-
-            # convert to int16, and gather on the CPU side
-            # WARNING: transpose because "tofile" always writes in C order, whereas we want
-            # to write in F order.
-            datcpu = cp.asnumpy(datr.astype(np.int16))
-
-            # write this batch to binary file
-            logger.debug(f"{ir.proc_path.stat().st_size} total, {datr.size * 2} bytes written to file {datcpu.shape} array size")
-            datcpu.tofile(fw)
-        logger.debug(f"{ir.proc_path.stat().st_size} total")

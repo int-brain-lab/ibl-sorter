@@ -68,9 +68,6 @@ class KilosortParams(BaseModel):
     
     seed: t.Optional[int] = Field(42, description="seed for deterministic output")
     
-    preprocessing_function: str = Field('kilosort2', description='pre-processing function used choices'
-                                                                 'are "kilosort2" or "destriping"')
-    
     channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
                                                                      'are "raw_correlations" or "kilosort"')
     
@@ -91,6 +88,9 @@ class KilosortParams(BaseModel):
     data_dtype: str = Field('int16', description='data type of raw data')
 
     n_channels: int = Field(385, description='number of channels in the data recording')
+
+    # [CR 2024-04-02]: add support for optional overlap at the beginning and end of each batch
+    overlap_samples: int = Field(0, description='number of overlap time samples to load at the beginning and end of each batch in the main template matching algorithm')
 
     probe: t.Optional[Probe] = Field(None, description="recording probe metadata")
 

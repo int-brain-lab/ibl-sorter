@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 
 import numpy as np
 
-from .preprocess import preprocess, get_good_channels, get_whitening_matrix, get_Nbatch, destriping
+from .preprocess import get_good_channels, get_whitening_matrix, get_Nbatch, destriping
 from .cluster import clusterSingleBatches
 from .datashift2 import datashift2
 from .learn import learnAndSolve8b
@@ -109,7 +109,7 @@ def run(
         # of the data
         with ctx.time("whitening_matrix"):
             ir.Wrot = get_whitening_matrix(
-                raw_data=raw_data, probe=probe, params=params, qc_path=ctx_path
+                raw_data=raw_data, probe=probe, params=params, # qc_path=ctx_path
             )
         # Cache the result.
         ctx.write(Wrot=ir.Wrot)
@@ -122,10 +122,7 @@ def run(
     if "preprocess" not in ctx.timer.keys():
         # Do not preprocess again if the proc.dat file already exists.
         with ctx.time("preprocess"):
-            if params.preprocessing_function == 'destriping':
-                destriping(ctx)
-            else:
-                preprocess(ctx)
+            destriping(ctx)
     if stop_after == "preprocess":
         return ctx
 
