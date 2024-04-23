@@ -7,6 +7,7 @@ import numpy as np
 import cupy as cp
 import dartsort
 from dredge import dredge_ap
+import pykilosort.qc
 from scipy.interpolate import Akima1DInterpolator
 from scipy.sparse import coo_matrix
 import spikeinterface.full as si
@@ -589,10 +590,10 @@ def get_dredge_drift(spikes, params):
     dshift = -motion_est.displacement.T
     yblk = motion_est.spatial_bin_centers_um
     
-    return dshift, yblk
+    return motion_est, dshift, yblk
 
 
-def datashift2(ctx):
+def datashift2(ctx, qc_path=None):
     """
     Main function to re-register the preprocessed data
     """
@@ -601,9 +602,9 @@ def datashift2(ctx):
     raw_data = ctx.raw_data
     ir = ctx.intermediate
     Nbatch = ir.Nbatch
-    
+
     spikes = dartsort_detector(ctx, probe, params)
-    
+
     # from brainbox.plot import driftmap
     # from viewephys.gui import viewephys
     #
@@ -627,14 +628,17 @@ def datashift2(ctx):
         np.save(drift_path / 'spike_depths.npy', spikes.depths)
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
-    dshift, yblk = get_dredge_drift(spikes, params)
-    
+    motion_est, dshift, yblk = get_dredge_drift(spikes, params)
+
     if params.save_drift_estimates:
         drift_path = ctx.context_path / 'drift'
         if not os.path.isdir(drift_path):
             os.mkdir(drift_path)
         np.save(drift_path / 'dshift.npy', dshift)
         np.save(drift_path / 'yblk.npy', yblk)
+
+    if qc_path is not None:
+        pykilosort.qc.plot_motion_correction(motion_est, spikes, qc_path)
 
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))

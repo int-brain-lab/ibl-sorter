@@ -1,4 +1,5 @@
 from pathlib import Path
+import dredge.motion_util as mu
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,6 +19,28 @@ def plot_covariance_matrix(covariance_matrix, out_path):
         plt.close(fig)
     else:
         return fig, ax
+
+
+def plot_motion_correction(motion_est, spikes, out_path=None):
+
+    raster, depth_bin_edges, time_bin_edges = mu.spike_raster(
+        spikes.amps, spikes.depths, spikes.times
+    )
+
+    fig, ax = plt.subplots()
+    im = mu.show_raster(raster, depth_bin_edges, time_bin_edges, ax, vmax=15, aspect="auto")
+    mu.plot_me_traces(motion_est, ax, c="r", lw=0.5)
+    plt.colorbar(im, ax=ax, label="amplitude (uv)")
+    fig.suptitle("DREDge drift estimate", fontsize=12)
+    if out_path is not None:
+        fig.savefig(out_path.joinpath("_iblqc_.drift_estimate.png"))
+
+    fig, ax = plt.subplots()
+    im = mu.show_registered_raster(motion_est, a, z, t, ax, vmax=15, aspect="auto")
+    plt.colorbar(im, ax=ax, label="amplitude (uv)")
+    fig.suptitle("DREDge registered raster", fontsize=12)
+    if out_path is not None:
+        fig.savefig(out_path.joinpath("_iblqc_.drift_registered.png"))
 
 
 def plot_whitening_matrix(wrot, whitening_range=32, out_path=None, good_channels=None):

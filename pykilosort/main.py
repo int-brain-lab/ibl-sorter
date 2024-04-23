@@ -149,7 +149,7 @@ def run(
     if params.perform_drift_registration:
         if "drift_correction" not in ctx.timer.keys():
             with ctx.time("drift_correction"):
-                out = datashift2(ctx)
+                out = datashift2(ctx, qc_path=ctx_path)
             ctx.save(**out)
     else:
         ctx.intermediate.iorig = np.arange(ctx.intermediate.Nbatch)
