@@ -1,9 +1,18 @@
 # 1.6
+### 1.6a00
+### 1.6a.dev5
+-   reworks datashift2 to use DARTsort spike detection, fed into DREDge motion estimation
+### 1.6a.dev4
+-   uses ibl-neuropixel 1.0.0 that contains the saturation mitigation in the pre-processing
+### 1.6a.dev3
+-   spike hole branch merge with overlap parameter set to 1024
+### 1.6a.dev2
+-   spike hole branch merge with overlap parameter set to 0
+### 1.6a.dev1
+-   adds APR RMS output to pre-processing
 ### 1.6a.dev0
 -   outputs `probe.channels.npy` via phylib forced update
-### 1.6a.dev1
--   merge the spike holes fix branch for testing
-- 
+
 # 1.5
 ### 1.5.1 bugfix
 - `probes.channel_labels` was referenced in plural in some parts of the code
