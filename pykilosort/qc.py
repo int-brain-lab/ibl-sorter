@@ -36,7 +36,7 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
         fig.savefig(out_path.joinpath("_iblqc_.drift_estimate.png"))
 
     fig, ax = plt.subplots()
-    im = mu.show_registered_raster(motion_est, a, z, t, ax, vmax=15, aspect="auto")
+    im = mu.show_registered_raster(motion_est, spikes.amps, spikes.depths, spikes.times, ax, vmax=15, aspect="auto")
     plt.colorbar(im, ax=ax, label="amplitude (uv)")
     fig.suptitle("DREDge registered raster", fontsize=12)
     if out_path is not None:
