@@ -12,7 +12,7 @@ from .utils import Bunch, memmap_binary_file, read_data, load_probe, plot_dissim
 from .main import run, run_export, run_spikesort, run_preprocess
 from .io.probes import np1_probe, np2_probe, np2_4shank_probe
 
-__version__ = '1.6a00'
+__version__ = '1.6a01'
 
 # Set a null handler on the root logger
 logger = logging.getLogger(__name__)
