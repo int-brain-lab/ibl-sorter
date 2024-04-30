@@ -137,7 +137,7 @@ class KilosortParams(BaseModel):
     )
 
     Th: t.List[float] = Field(
-        [10, 4],
+        [6, 3],
         description="""
         threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
     """,
