@@ -98,10 +98,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
         run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, stop_after=stop_after, **params)
-        # move back the QC files to the original probe folder for registration
-        for qc_file in session_scratch_dir.rglob('_iblqc_*'):
-            _logger.info(f"Saved {qc_file}")
-            shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e

@@ -109,7 +109,7 @@ def run(
         # of the data
         with ctx.time("whitening_matrix"):
             ir.Wrot = get_whitening_matrix(
-                raw_data=raw_data, probe=probe, params=params, qc_path=ctx_path
+                raw_data=raw_data, probe=probe, params=params, qc_path=output_dir
             )
         # Cache the result.
         ctx.write(Wrot=ir.Wrot)
@@ -149,7 +149,7 @@ def run(
     if params.perform_drift_registration:
         if "drift_correction" not in ctx.timer.keys():
             with ctx.time("drift_correction"):
-                out = datashift2(ctx, qc_path=ctx_path)
+                out = datashift2(ctx, qc_path=output_dir)
             ctx.save(**out)
     else:
         ctx.intermediate.iorig = np.arange(ctx.intermediate.Nbatch)
