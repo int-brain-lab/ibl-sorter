@@ -24,6 +24,9 @@ def kdes(spikes_a, spikes_b, clusters_a, clusters_b, title='', label_a='', label
     :param output_file:
     :return:
     """
+    # those constants could be passed as arguments
+    ylim_clusters, ylim_clusters_ok = ([0, 250], [0, 50])
+    ylim_spikes, ylim_spikes_ok = ([0, 200_000], [0, 80_000])
     # first we compute a few indices and counts
     ns = np.maximum(spikes_a['amps'].size, spikes_b['amps'].size)
     nc = np.maximum(clusters_a['label'].size, clusters_b['label'].size)
@@ -40,40 +43,43 @@ def kdes(spikes_a, spikes_b, clusters_a, clusters_b, title='', label_a='', label
     kwargs = dict(bins=500, range=[1, 3])
     count_a, edges = np.histogram(np.log10(spikes_a['amps'][sok_a] * 1e6), **kwargs)
     count_b, edges = np.histogram(np.log10(spikes_b['amps'][sok_b] * 1e6), **kwargs)
-    sns.lineplot(x=edges[:-1], y=count_a / ns, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
-    sns.lineplot(x=edges[:-1], y=count_b / ns, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
     count_a, edges = np.histogram(np.log10(spikes_a['amps'] * 1e6), **kwargs)
     count_b, edges = np.histogram(np.log10(spikes_b['amps'] * 1e6), **kwargs)
-    # twin_axis = plt.twinx(ax)
-    sns.lineplot(x=edges[:-1], y=count_a / ns, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
-    sns.lineplot(x=edges[:-1], y=count_b / ns, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
-    ax.set(title='Spike amplitudes distribution', xlabel='Spike amplitude [log10(uV)]', ylabel='Density (%)', xlim=kwargs['range'])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
+    ax.set(title='Spike amplitudes distribution', xlabel='Spike amplitude [log10(uV)]', ylabel='Spike Count',
+           xlim=kwargs['range'], ylim=ylim_spikes)
 
     # the middle figure is the distribution of the units amplitudes
     ax = axs[1]
     kwargs = dict(bins=25, range=[1, 3])
     count_a, edges = np.histogram(np.log10(clusters_a['amp_median'][cok_a] * 1e6), **kwargs)
     count_b, edges = np.histogram(np.log10(clusters_b['amp_median'][cok_b] * 1e6), **kwargs)
-    sns.lineplot(x=edges[:-1], y=count_a / nc, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
-    sns.lineplot(x=edges[:-1], y=count_b / nc, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
     count_a, edges = np.histogram(np.log10(clusters_a['amp_median'] * 1e6), **kwargs)
     count_b, edges = np.histogram(np.log10(clusters_b['amp_median'] * 1e6), **kwargs)
-    sns.lineplot(x=edges[:-1], y=count_a / nc, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
-    sns.lineplot(x=edges[:-1], y=count_b / nc, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
-    ax.set(title='Unit amplitude distribution', xlabel='Amplitude [log10(uV)]', ylabel='Density', xlim=kwargs['range'])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
+    ax.set(title='Unit amplitude distribution', xlabel='Amplitude [log10(uV)]', ylabel='Unit Count',
+           xlim=kwargs['range'], ylim=ylim_clusters)
 
     # the right figure is the distribution of units firing rates
     ax = axs[2]
     kwargs = dict(bins=25, range=[-3, 3])
     count_a, edges = np.histogram(np.log10(clusters_a['firing_rate'][cok_a]), **kwargs)
     count_b, edges = np.histogram(np.log10(clusters_b['firing_rate'][cok_b]), **kwargs)
-    sns.lineplot(x=edges[:-1], y=count_a / nc, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
-    sns.lineplot(x=edges[:-1], y=count_b / nc, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a + ' good', color=sns.color_palette()[0])
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b + ' good', color=sns.color_palette()[1])
     count_a, edges = np.histogram(np.log10(clusters_a['firing_rate']), **kwargs)
     count_b, edges = np.histogram(np.log10(clusters_b['firing_rate']), **kwargs)
-    sns.lineplot(x=edges[:-1], y=count_a / nc, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
-    sns.lineplot(x=edges[:-1], y=count_b / nc, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
-    ax.set(title='Firing rates distribution', xlabel='Firing rates [log10(Hz)]', ylabel='Density', xlim=kwargs['range'])
+    sns.lineplot(x=edges[:-1], y=count_a, ax=ax, label=label_a, color=sns.color_palette()[0], linestyle='--')
+    sns.lineplot(x=edges[:-1], y=count_b, ax=ax, label=label_b, color=sns.color_palette()[1], linestyle='--')
+    ax.set(title='Firing rates distribution', xlabel='Firing rates [log10(Hz)]', ylabel='Unit Count',
+           xlim=kwargs['range'], ylim=ylim_clusters)
+
 
     # %% add grids, legends, and tight layout
     for ax in axs:
@@ -120,7 +126,6 @@ def fig_spike_holes(spikes_a, spikes_b, title='', label_a='', label_b='', output
 
 def venn_units(spikes_a, spikes_b, clusters_a, clusters_b, fs=30_000, title='', label_a='', label_b='', output_file=None):
     """
-
     :param spikes_a:
     :param spikes_b:
     :param clusters_a:
@@ -133,18 +138,15 @@ def venn_units(spikes_a, spikes_b, clusters_a, clusters_b, fs=30_000, title='', 
     :return:
     """
 
-    sorting_a = se.NumpySorting.from_times_labels(spikes_a['samples'] / fs, spikes_a['clusters'], fs)
-    sorting_b = se.NumpySorting.from_times_labels(spikes_b['samples'] / fs, spikes_b['clusters'], fs)
+    sorting_a = se.NumpySorting.from_times_labels(spikes_a['samples'], spikes_a['clusters'], fs)
+    sorting_b = se.NumpySorting.from_times_labels(spikes_b['samples'], spikes_b['clusters'], fs)
     bssc = BinnedSymmetricSortingComparison(sorting_a, sorting_b, sorting1_name=label_a, sorting2_name=label_b)
 
     iok_a = clusters_a['label'][spikes_a['clusters']] == 1
     iok_b = clusters_b['label'][spikes_b['clusters']] == 1
-    sorting_a_good = se.NumpySorting.from_times_labels(
-        spikes_a['samples'][iok_a] / fs, spikes_a['clusters'][iok_a], fs)
-    sorting_b_good = se.NumpySorting.from_times_labels(
-        spikes_b['samples'][iok_b] / fs, spikes_b['clusters'][iok_b], fs)
-    bssc_good = BinnedSymmetricSortingComparison(sorting_a_good, sorting_b_good, sorting1_name=label_a,
-                                                 sorting2_name=label_b)
+    sorting_a_good = se.NumpySorting.from_times_labels(spikes_a['samples'][iok_a], spikes_a['clusters'][iok_a], fs)
+    sorting_b_good = se.NumpySorting.from_times_labels(spikes_b['samples'][iok_b], spikes_b['clusters'][iok_b], fs)
+    bssc_good = BinnedSymmetricSortingComparison(sorting_a_good, sorting_b_good, sorting1_name=label_a, sorting2_name=label_b)
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 5), gridspec_kw={"width_ratios": (1, 1)})
     num_match_best = np.sum(bssc.best_match_12 != -1.0)
