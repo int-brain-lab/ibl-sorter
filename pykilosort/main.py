@@ -35,6 +35,8 @@ def run(
     stop_after: str
         Stop after the given step. Possible values are: whitening_matrix, preprocess, drift_correction, learn, merge, split_1, cutoff
     """
+    if params["low_memory"]:
+        logger.info("Running in low-memory mode.")
 
     # Get or create the probe object.
     if isinstance(probe, (str, Path)):
