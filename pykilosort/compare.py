@@ -197,6 +197,8 @@ def reveal_pid(ssl: SpikeSortingLoader, spikes_a, spikes_b, clusters_a, clusters
     nc_ok_b = np.sum(clusters_b['label'] == 1)
     spikes_a_good = {k: spikes_a[k][clusters_a['label'][spikes_a['clusters']] == 1] for k in spikes_a}
     spikes_b_good = {k: spikes_b[k][clusters_b['label'][spikes_b['clusters']] == 1] for k in spikes_b}
+    print(ns_a, ns_b, spikes_a_good['times'].size, spikes_b_good['times'].size)
+    raise ValueError
     # this title will be reused throughout the figures
     title = (f"{ssl.pid}"
              f"\n{nc_ok_a}/{nc_a} units {ns_a / 1e6:.2f} M spikes "
