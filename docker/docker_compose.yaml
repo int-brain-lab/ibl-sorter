@@ -1,7 +1,7 @@
 services:
-  test:
+  spikesorter:
     image: int-brain-lab/pykilosort:latest
-    entrypoint: /bin/bash -c "nvidia-smi && python -c 'import torch; print(torch.cuda.is_available())'"
+    entrypoint: python /root/Documents/PYTHON/pykilosort/examples/ibl_spikesorting_task.py /mnt/s1/spikesorting/raw_data/mainenlab/Subjects/ZM_2240/2020-01-23/001/raw_ephys_data/probe00/
     deploy:
       resources:
         reservations:
@@ -9,3 +9,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    volumes:
+      - /mnt/s0:/mnt/s0
+      - /mnt/s1:/mnt/s1
+      - /home/olivier/scratch:/scratch
