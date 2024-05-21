@@ -25,7 +25,8 @@ curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dear
 apt-get update
 
 # install docker and nvidia-container-toolkit
-apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt-get install -y
+docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 apt-get install -y nvidia-container-toolkit
 nvidia-ctk runtime configure --runtime=docker
 systemctl restart docker
