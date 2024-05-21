@@ -2,6 +2,7 @@ FROM  pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
 # RUN nvidia-smi  # uncomment to enforce GPU availability during the run
 
 RUN apt-get update && apt-get install -y \
+    vim \
     gcc \
     git \
     libfftw3-dev \

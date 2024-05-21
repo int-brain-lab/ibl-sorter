@@ -14,3 +14,5 @@ docker buildx build . \
     --tag int-brain-lab/pykilosort:latest
 ```
 
+Running the container in interactive mode: 
+`docker compose -f docker-compose.yaml -p docker up -d spikesorter sh`
