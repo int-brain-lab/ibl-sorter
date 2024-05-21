@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # check gpu support
 nvidia-smi
@@ -8,7 +9,7 @@ for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker c
 
 # add the docker and nvidia-container-toolkit to apt-sources
 apt-get update
-apt-get install ca-certificates curl
+apt-get install -y ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 chmod a+r /etc/apt/keyrings/docker.asc
@@ -25,8 +26,7 @@ curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dear
 apt-get update
 
 # install docker and nvidia-container-toolkit
-apt-get install -y
-docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 apt-get install -y nvidia-container-toolkit
 nvidia-ctk runtime configure --runtime=docker
 systemctl restart docker

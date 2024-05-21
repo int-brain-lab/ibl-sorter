@@ -4,12 +4,11 @@
 ## Installation of the container
 
 Pre-requisites:
+- nvidia driver
 - Docker
 - Nvidia Container toolkit
 
 ```
-git clone -b ibl_prod_dev https://github.com/int-brain-lab/pykilosort.git
-cd pykilosort/docker
 sudo ./setup_nvidia_container_toolkit.sh
 ```
 
@@ -25,3 +24,24 @@ Running the container in interactive mode:
 
 And then connect to it by running a terminal:
 `sudo docker compose exec spikesorter /bin/bash`
+
+
+## Installing from a blank EC2
+
+Install the nvidia drivers
+```
+sudo apt install -y ubuntu-drivers-common
+sudo ubuntu-drivers install
+sudo reboot
+```
+
+Install Docker
+```
+mkdir -p ~/Documents/PYTHON
+cd ~/Documents/PYTHON
+git clone -b ibl_prod_dev https://github.com/int-brain-lab/pykilosort.git
+cd pykilosort/docker
+sudo ./setup_nvidia_container_toolkit.sh
+```
+
+Setup ONE from inside the container, make sure the base url for alyx is `/mnt/s0/spikesorting`

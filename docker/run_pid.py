@@ -14,7 +14,7 @@ from brainbox.io.one import EphysSessionLoader, SpikeSortingLoader
 from iblatlas.atlas import BrainRegions
 br = BrainRegions()
 
-one = ONE(base_url="https://alyx.internationalbrainlab.org")  # cache_dir = "/mnt/s1/spikesorting/raw_data"
+one = ONE()  # cache_dir = "/mnt/s1/spikesorting/raw_data"
 
 # hausser
 pids = [
@@ -33,6 +33,15 @@ pids = [
     '7c94d733-b913-4064-83f2-37422712204c',  # download
     'aec2b14f-5dbc-400b-bf2e-dd13e711e2ff',  # download
 ]
+
+# ssp2
+pids = [
+'ca073754-be17-43b7-a38a-0c1e5563ff32',
+'cab81176-36cd-4c37-9353-841e85027d36',
+'ccb501d1-a4fa-41c6-819e-54aaf74d439d',
+'ce397420-3cd2-4a55-8fd1-5e28321981f4',
+]
+
 
 for pid in pids:
     ssl = SpikeSortingLoader(one=one, pid=pid)
