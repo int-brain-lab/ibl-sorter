@@ -20,7 +20,7 @@ docker buildx build . --platform linux/amd64 --tag int-brain-lab/pykilosort:late
 ```
 
 Running the container in interactive mode: 
-`docker compose up -d`
+`sudo docker compose up -d`
 
 And then connect to it by running a terminal:
 `sudo docker compose exec spikesorter /bin/bash`

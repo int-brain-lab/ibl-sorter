@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libfftw3-dev \
     libfftw3-doc \
+    rsync \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/*
 
