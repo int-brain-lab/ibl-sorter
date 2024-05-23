@@ -1,5 +1,13 @@
 # Containerization of pykilosort
 
+## Usage
+
+ ```
+sudo docker compose up -d
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/pykilosort/docker/run_pid.py aec2b14f-5dbc-400b-bf2e-dd13e711e2ff 
+sudo docker compose down` 
+ ```
+
 
 ## Installation of the container
 
@@ -12,7 +20,7 @@ Pre-requisites:
 sudo ./setup_nvidia_container_toolkit.sh
 ```
 
-## Building the container
+### Building the container
 
 From the `./docker` folder, run the following command:
 ```shell
@@ -28,14 +36,14 @@ And then connect to it by running a terminal:
 
 ## Installing from a blank EC2
 
-Install the nvidia drivers
+1. Install the nvidia drivers
 ```
 sudo apt install -y ubuntu-drivers-common
 sudo ubuntu-drivers install
 sudo reboot
 ```
 
-Install Docker
+2. Install Docker using the bootstrap script provided
 ```
 mkdir -p ~/Documents/PYTHON
 cd ~/Documents/PYTHON
@@ -44,4 +52,6 @@ cd pykilosort/docker
 sudo ./setup_nvidia_container_toolkit.sh
 ```
 
-Setup ONE from inside the container, make sure the base url for alyx is `/mnt/s0/spikesorting`
+3. Setup ONE from inside the container, make sure the base url for alyx is `/mnt/s0/spikesorting`
+
+4. If you want to send the data to flatiron you'll have to setup the `~/.ssh/config` file so as to reflect the `sdsc` SSH configuration.
