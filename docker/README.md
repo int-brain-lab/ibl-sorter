@@ -1,13 +1,10 @@
 # Containerization of pykilosort
 
 ## Usage
-
+ 
+ ```shell
+sudo docker compose run spikesorter 5d570bf6-a4c6-4bf1-a14b-2c878c84ef0e
  ```
-sudo docker compose up -d
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/pykilosort/docker/run_pid.py aec2b14f-5dbc-400b-bf2e-dd13e711e2ff 
-sudo docker compose down` 
- ```
-
 
 ## Installation of the container
 
