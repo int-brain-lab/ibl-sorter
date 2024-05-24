@@ -445,7 +445,7 @@ def dartsort_detector(ctx, probe, params):
     # un-whiten the data to be fed into the dartsort spike detector
     # ignore OOB channels prior to computing a pseudoinverse of Wrot
     Wrot = cp.asnumpy(ctx.intermediate.Wrot)
-    W = np.eye(384)
+    W = np.eye(probe.Nchan)
     oob = probe.channel_labels != 3.
     idx = np.ix_(oob, oob)
     W[idx] = np.linalg.pinv(Wrot[idx])
@@ -455,8 +455,8 @@ def dartsort_detector(ctx, probe, params):
     # estimate the STDEV and MU vectors from chunks throughout recording
     nchunk = 25
     t0s = np.linspace(10, ns / params.fs - 10, nchunk)
-    stds = np.zeros((nchunk, 384))
-    mus = np.zeros((nchunk, 384))
+    stds = np.zeros((nchunk, probe.Nchan))
+    mus = np.zeros((nchunk, probe.Nchan))
     for icc, t0 in enumerate(tqdm(t0s)):
         s0, s1 = int(t0 * params.fs), int((t0 + 0.4) * params.fs)
         # z-scoring is after unwhitening
