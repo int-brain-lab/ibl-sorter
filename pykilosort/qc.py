@@ -27,20 +27,20 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
         spikes.amps, spikes.depths, spikes.times
     )
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15, 8))
     im = mu.show_raster(raster, depth_bin_edges, time_bin_edges, ax, vmax=15, aspect="auto")
     mu.plot_me_traces(motion_est, ax, c="r", lw=0.5)
     plt.colorbar(im, ax=ax, label="amplitude (uv)")
-    ax.set_aspect(9/16)
-    fig.suptitle("DREDge drift estimate", fontsize=12)
+    ax.set(title="DREDge drift estimate", ylim=[depth_bin_edges.min(), depth_bin_edges.max()])
+    fig.tight_layout()
     if out_path is not None:
         fig.savefig(out_path.joinpath("_iblqc_.drift_estimate.png"))
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(15, 8))
     im = mu.show_registered_raster(motion_est, spikes.amps, spikes.depths, spikes.times, ax, vmax=15, aspect="auto")
     plt.colorbar(im, ax=ax, label="amplitude (uv)")
-    ax.set_aspect(9/16)
-    fig.suptitle("DREDge registered raster", fontsize=12)
+    ax.set(title="DREDge registered raster", ylim=[depth_bin_edges.min(), depth_bin_edges.max()])
+    fig.tight_layout()
     if out_path is not None:
         fig.savefig(out_path.joinpath("_iblqc_.drift_registered.png"))
 
