@@ -493,14 +493,17 @@ def dartsort_detector(ctx, probe, params):
                     dartsort.make_channel_index(geom, 75.0)
                 ),
             )
+    # at 40k spikes per chunk, should factor 2 Gb memory per job
+    total_memory = torch.cuda.mem_get_info()[1] / 1024 ** 3
+    njobs = int(np.minimum(np.floor(total_memory / (2 * 1.5)), 12))
+    logger.info(f"Using {njobs} GPU jobs for spike detection, targeting memory usage of {njobs * 2} Gb over {total_memory} Gb")
     peeler.load_or_fit_and_save_models(
-                ctx.context_path / "thresholding_models", n_jobs=8
+                ctx.context_path / "thresholding_models", n_jobs=njobs
             )
     peeler.peel(
             ctx.context_path / "thresholding.h5",
-            n_jobs=8,
+            n_jobs=njobs,
         )
-    
     st = dartsort.DARTsortSorting.from_peeling_hdf5(ctx.context_path / "thresholding.h5")
 
     spikes = Bunch()

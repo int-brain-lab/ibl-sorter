@@ -1,3 +1,8 @@
+# 1.7
+### 1.7.1
+- bugfix geometry of probes in registration was hard coded to 384 channels
+- bugfix dredge detection memory management sets a number of jobs according to GPU size
+
 # 1.6
 ### 1.6a00
 ### 1.6a.dev5
