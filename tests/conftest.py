@@ -4,9 +4,9 @@ from pytest import fixture
 
 import numpy as np
 
-from pykilosort.utils import Bunch, read_data
+from iblsorter.utils import Bunch, read_data
 
-from pykilosort import add_default_handler
+from iblsorter import add_default_handler
 add_default_handler(level='DEBUG')
 
 

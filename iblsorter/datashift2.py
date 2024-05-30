@@ -7,7 +7,7 @@ import numpy as np
 import cupy as cp
 import dartsort
 from dredge import dredge_ap
-import pykilosort.qc
+import iblsorter.qc
 from scipy.interpolate import Akima1DInterpolator
 from scipy.sparse import coo_matrix
 import spikeinterface.full as si
@@ -634,7 +634,7 @@ def datashift2(ctx, qc_path=None):
     motion_est, dshift, yblk = get_dredge_drift(spikes, params)
 
     if qc_path is not None:
-        pykilosort.qc.plot_motion_correction(motion_est, spikes, qc_path)
+        iblsorter.qc.plot_motion_correction(motion_est, spikes, qc_path)
 
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))

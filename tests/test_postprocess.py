@@ -1,6 +1,6 @@
 import numpy as np
 
-from pykilosort.postprocess import ccg
+from iblsorter.postprocess import ccg
 
 
 def slow_ccg(st1, st2, nbins, tbin):

@@ -1,7 +1,7 @@
 import spikeglx
-from pykilosort.preprocess import get_data_covariance_matrix
-from pykilosort import ibl, run
-from pykilosort import params
+from iblsorter.preprocess import get_data_covariance_matrix
+from iblsorter import ibl, run
+from iblsorter import params
 from ibldsp import voltage
 params = ibl.ibl_pykilosort_params(1)
 probe = params['probe']

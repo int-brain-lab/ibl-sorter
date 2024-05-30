@@ -1,7 +1,7 @@
 import numpy as np
 import cupy as cp
 
-from pykilosort.learn import mexWtW2
+from iblsorter.learn import mexWtW2
 
 
 def get_time_lags(array1, array2):

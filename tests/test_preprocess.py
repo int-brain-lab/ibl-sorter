@@ -3,7 +3,7 @@ import numpy as np
 from scipy.signal import lfilter as lfilter_cpu
 import cupy as cp
 
-from pykilosort.postprocess import my_conv2, merge_by_order
+from iblsorter.postprocess import my_conv2, merge_by_order
 
 sig = 250
 tmax = 1000

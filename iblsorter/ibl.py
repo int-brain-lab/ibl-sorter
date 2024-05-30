@@ -11,8 +11,8 @@ import neuropixel
 from ibllib.ephys import spikes
 from one.alf.files import get_session_path
 from one.remote import aws
-from pykilosort import add_default_handler, run, Bunch, __version__
-from pykilosort.params import KilosortParams
+from iblsorter import add_default_handler, run, Bunch, __version__
+from iblsorter.params import KilosortParams
 
 
 _logger = logging.getLogger("pykilosort")

@@ -1,16 +1,19 @@
-# Python port of KiloSort2
+# IBL Spike Sorting
 
-This is a Python port of the original MATLAB version of [Kilosort 2.5](https://github.com/MouseLand/Kilosort), written by Marius Pachitariu, with Neuropixel specific improvements and software engineering enhancements.
-The modifications are described in [this white paper](https://doi.org/10.6084/m9.figshare.19705522.v3).
+This is a Python port of the original MATLAB version of [Kilosort 2.5](https://github.com/MouseLand/Kilosort), written by Marius Pachitariu.
+
+TODO: changes
+The modifications are described in [this presentation](https://docs.google.com/presentation/d/18bD_vQU45bLDSxd_QW2kbzEg8_5o3dqO5Gm9huXbNKE/edit?usp=sharing)
+We are working on an updated version of the whitepaper, but in the meantime, you can refer to [the previous version here](https://doi.org/10.6084/m9.figshare.19705522.v3).
 
 ## Installation 
 
 ### System Requirements
 
 The code makes extensive use of the GPU via the CUDA framework. A high-end NVIDIA GPU with at least 8GB of memory is required.
+The solution has been deployed and tested on Cuda 12+.
 
-
-### Doing the install using Anaconda (Linux)
+### Python environment
 
 Only on Linux, first install fftw by running the following 
     
@@ -18,14 +21,14 @@ Only on Linux, first install fftw by running the following
 
 Navigate to the desired location for the repository and clone it
 
-    git clone https://github.com/int-brain-lab/pykilosort.git
-    cd pykilosort
+    git clone https://github.com/int-brain-lab/ibl-sorter.git
+    cd ibl-sorter
 
-Create a conda environment
-
-    conda env create -f pyks2.yml
-    conda activate pyks2
+    pip install cupy-cuda12x
+    pip3 install torch torchvision torchaudio
     pip install -e .
+
+
 
 ## Usage
 
@@ -38,12 +41,14 @@ The smallest dataset is a 100 seconds excerpt to test the installation. Here is 
 import shutil
 from pathlib import Path
 
-from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
+from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 
 data_path = Path("/mnt/s0/spike_sorting/integration_tests")  # path on which the raw data will be downloaded
-scratch_dir = Path.home().joinpath("scratch", 'pykilosort')  # temporary path on which intermediate raw data will be written, we highly recommend a SSD drive
+scratch_dir = Path.home().joinpath("scratch",
+                                   'iblsorter')  # temporary path on which intermediate raw data will be written, we highly recommend a SSD drive
 ks_output_dir = Path("/mnt/s0/spike_sorting/outputs")  # path containing the kilosort output unprocessed
-alf_path = ks_output_dir.joinpath('alf')  # this is the output standardized as per IBL standards (SI units, ALF convention)
+alf_path = ks_output_dir.joinpath(
+    'alf')  # this is the output standardized as per IBL standards (SI units, ALF convention)
 
 # download the integration test data from amazon s3 bucket
 bin_file, meta_file = download_test_data(data_path)

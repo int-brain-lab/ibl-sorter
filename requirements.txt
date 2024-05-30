@@ -1,15 +1,20 @@
 click
 dartsort @ git+https://github.com/cwindolf/dartsort@main
 dredge @ git+https://github.com/evarol/dredge@main
+hdbscan
+h5py
 matplotlib
 mock
 numba
 numpy
-ibl-neuropixel >= 1.0.0
+ibllib @ git+https://github.com/int-brain-lab/ibllib@spikesorting_rerun
+ibl-neuropixel >= 1.0.1
+ipython
 phylib >= 2.5.0
 pydantic
 pyfftw
 pytest
+pyqt5
 scipy
 spikeinterface
 tqdm

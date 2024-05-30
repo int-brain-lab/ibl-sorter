@@ -8,7 +8,7 @@ import scipy.stats
 import cupy as cp
 from tqdm.auto import tqdm
 
-import pykilosort.qc
+import iblsorter.qc
 from .cptools import lfilter, median
 from ibldsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
 
@@ -236,8 +236,8 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     elif params.normalisation == 'global_zscore':
         Wrot = cp.eye(CC.shape[0]) * np.median(cp.diag(CC) ** (-0.5))  # same value for all channels
     if qc_path is not None:
-        pykilosort.qc.plot_whitening_matrix(Wrot.get(), good_channels=probe.good_channels, out_path=qc_path)
-        pykilosort.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)
+        iblsorter.qc.plot_whitening_matrix(Wrot.get(), good_channels=probe.good_channels, out_path=qc_path)
+        iblsorter.qc.plot_covariance_matrix(CC.get(), out_path=qc_path)
 
     Wrot = Wrot * params.scaleproc
     condition_number = np.linalg.cond(cp.asnumpy(Wrot)[probe.good_channels, :][:, probe.good_channels])

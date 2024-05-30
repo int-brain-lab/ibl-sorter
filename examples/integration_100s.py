@@ -1,10 +1,12 @@
 import shutil
 from pathlib import Path
 
-import pykilosort
-from pykilosort.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
+import iblsorter
+from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
+from viz import reports
 
-INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/spike_sorting/integration_test")
+# TODO automate download of the test data from s3
+INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests")
 # INTEGRATION_DATA_PATH = Path("/mnt/s1/spikesorting/integration_tests")
 
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
@@ -25,7 +27,7 @@ def run_integration_test(bin_file):
 
     :param bin_file:
     """
-    output_dir = INTEGRATION_DATA_PATH.joinpath(f"{pykilosort.__version__}" + label, bin_file.name.split('.')[0])
+    output_dir = INTEGRATION_DATA_PATH.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
     ks_output_dir = output_dir.joinpath('pykilosort')
     alf_path = ks_output_dir.joinpath('alf')
 
@@ -45,11 +47,9 @@ def run_integration_test(bin_file):
         intermediate_directory.mkdir(exist_ok=True)
         shutil.copy(pre_proc_file, intermediate_directory)
 
-
-    from viz import reports
     reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
                              raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
                              vmax=0.05, d_bin=5, t_bin=0.001)
 
-run_integration_test(INTEGRATION_DATA_PATH.joinpath("/mnt/s1/spikesorting/integration_tests/subjects/algernon/2024-04-10/001/raw_ephys_data/749cb2b7-e57e-4453-a794-f6230e4d0226/749cb2b7-e57e-4453-a794-f6230e4d0226.ap.cbin"))
+
 run_integration_test(INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin"))

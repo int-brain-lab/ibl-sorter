@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 import numpy as np
 
-import pykilosort
-from pykilosort.ibl import run_spike_sorting_ibl
+import iblsorter
+from iblsorter.ibl import run_spike_sorting_ibl
 
 # Minimum recall to pass checks (percentage)
 MIN_RECALL = 90
@@ -179,10 +179,10 @@ if MULTIPARTS:
     bin_file.sort()
     # _make_compressed_parts(bin_file)
     ks_output_dir = INTEGRATION_DATA_PATH.joinpath(
-        f"{pykilosort.__version__}", bin_file[0].name.split('.')[0] + 'multi_parts')
+        f"{iblsorter.__version__}", bin_file[0].name.split('.')[0] + 'multi_parts')
 else:
     bin_file = INTEGRATION_DATA_PATH.joinpath("hybrid_data_100s.bin")
-    ks_output_dir = INTEGRATION_DATA_PATH.joinpath(f"{pykilosort.__version__}", bin_file.name.split('.')[0])
+    ks_output_dir = INTEGRATION_DATA_PATH.joinpath(f"{iblsorter.__version__}", bin_file.name.split('.')[0])
 
 
 ks_output_dir.mkdir(parents=True, exist_ok=True)

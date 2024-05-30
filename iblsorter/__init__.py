@@ -2,8 +2,8 @@ import logging
 import os
 
 if os.getenv('MOCK_CUPY', False):
-    from pykilosort.testing.mock_cupy import cupy 
-    from pykilosort.testing.mock_cupyx import cupyx
+    from iblsorter.testing.mock_cupy import cupy
+    from iblsorter.testing.mock_cupyx import cupyx
 else:
     import cupy
     import cupyx

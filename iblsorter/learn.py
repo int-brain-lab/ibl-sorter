@@ -6,9 +6,9 @@ import numpy as np
 import cupy as cp
 from tqdm.auto import tqdm
 
-from pykilosort.cptools import svdecon, svdecon_cpu, median, free_gpu_memory, ones
-from pykilosort.cluster import isolated_peaks_new, get_SpikeSample, getClosestChannels
-from pykilosort.utils import Bunch, get_cuda, _extend, LargeArrayWriter, plot_diagnostics
+from iblsorter.cptools import svdecon, svdecon_cpu, median, free_gpu_memory, ones
+from iblsorter.cluster import isolated_peaks_new, get_SpikeSample, getClosestChannels
+from iblsorter.utils import Bunch, get_cuda, _extend, LargeArrayWriter, plot_diagnostics
 
 logger = logging.getLogger(__name__)
 
