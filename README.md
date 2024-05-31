@@ -6,33 +6,9 @@ TODO: changes
 The modifications are described in [this presentation](https://docs.google.com/presentation/d/18bD_vQU45bLDSxd_QW2kbzEg8_5o3dqO5Gm9huXbNKE/edit?usp=sharing)
 We are working on an updated version of the whitepaper, but in the meantime, you can refer to [the previous version here](https://doi.org/10.6084/m9.figshare.19705522.v3).
 
-## Installation 
-
-### System Requirements
-
-The code makes extensive use of the GPU via the CUDA framework. A high-end NVIDIA GPU with at least 8GB of memory is required.
-The solution has been deployed and tested on Cuda 12+.
-
-### Python environment
-
-Only on Linux, first install fftw by running the following 
-    
-    sudo apt-get install -y libfftw3-dev
-
-Navigate to the desired location for the repository and clone it
-
-    git clone https://github.com/int-brain-lab/ibl-sorter.git
-    cd ibl-sorter
-
-    pip install cupy-cuda12x
-    pip3 install torch torchvision torchaudio
-    pip install -e .
-
-
 
 ## Usage
 
-### Example
 
 We provide a few datasets to explore parametrization and test on several brain regions.
 The smallest dataset is a 100 seconds excerpt to test the installation. Here is the minimal working example:
@@ -66,20 +42,34 @@ run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
                       ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
 ```
 
-## Troubleshooting
-### Managing CUDA Errors
 
-Errors with the CUDA installation can sometimes be fixed by downgrading
-the version of cudatoolkit installed. Currently tested versions are 9.2,
-10.0, 10.2, 11.0 and 11.5
+## Installation 
 
-To check the current version run the following:
+### System Requirements
 
-    conda activate pyks2
-    conda list cudatoolkit
+The code makes extensive use of the GPU via the CUDA framework. A high-end NVIDIA GPU with at least 8GB of memory is required.
+The solution has been deployed and tested on Cuda 12+.
 
-To install version 10.0 for example run the following
+### Python environment
 
-    conda activate pyks2
-    conda remove cupy, cudatoolkit
-    conda install -c conda-forge cupy cudatoolkit=10.0
+Only on Linux, first install fftw by running the following 
+    
+    sudo apt-get install -y libfftw3-dev
+
+Navigate to the desired location for the repository and clone it
+
+    git clone https://github.com/int-brain-lab/ibl-sorter.git
+    cd ibl-sorter
+
+    pip install cupy-cuda12x
+    pip3 install torch torchvision torchaudio
+    pip install -e .
+
+### Making sure the installation is successful and CUDA is available
+
+Here we make sure that both `cupy` and `torch` are installed and that the CUDA framework is available.
+
+```python
+from iblsorter.utils import cuda_installation_test
+cuda_installation_test()
+```

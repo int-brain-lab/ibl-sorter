@@ -40,7 +40,7 @@ def run_integration_test(bin_file):
     run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR, params=params,
                           ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='DEBUG')
     # we copy the temporary files to the output directory if we want to investigate them
-    if DELETE == False:
+    if not DELETE:
         working_directory = SCRATCH_DIR.joinpath('.kilosort', bin_file.stem)
         pre_proc_file = working_directory.joinpath('proc.dat')
         intermediate_directory = ks_output_dir.joinpath('intermediate')
@@ -51,5 +51,5 @@ def run_integration_test(bin_file):
                              raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
                              vmax=0.05, d_bin=5, t_bin=0.001)
 
-
-run_integration_test(INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin"))
+if __name__ == "__main__":
+    run_integration_test(INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin"))

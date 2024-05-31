@@ -8,33 +8,29 @@ import operator
 import os.path as op
 import re
 from time import perf_counter
-
 from tqdm.auto import tqdm
+
 import numpy as np
 from numpy.lib.format import (
     _check_version, _write_array_header, header_data_from_array_1_0, dtype_to_descr)
 import cupy as cp
+import torch
 
 from phylib.io.traces import get_ephys_reader
+from iblutil.util import Bunch
 
 from .event import emit, connect, unconnect  # noqa
 
 logger = logging.getLogger(__name__)
 
 
+def cuda_installation_test():
+    cp.zeros(10) * 2
+    assert torch.cuda.is_available()
+
+
 def prod(iterable):
     return reduce(operator.mul, iterable, 1)
-
-
-class Bunch(dict):
-    """A subclass of dictionary with an additional dot syntax."""
-    def __init__(self, *args, **kwargs):
-        super(Bunch, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
-    def copy(self):
-        """Return a new Bunch instance which is a copy of the current Bunch instance."""
-        return Bunch(super(Bunch, self).copy())
 
 
 def copy_bunch(old_bunch):

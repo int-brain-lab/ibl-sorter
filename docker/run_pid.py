@@ -13,9 +13,8 @@ from ibllib.pipes.ephys_tasks import SpikeSorting
 
 from pathlib import Path
 from one.api import ONE
-from brainbox.io.one import EphysSessionLoader, SpikeSortingLoader
-from iblatlas.atlas import BrainRegions
-br = BrainRegions()
+from brainbox.io.one import SpikeSortingLoader
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

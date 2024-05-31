@@ -190,6 +190,11 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None):
         raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
         datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels) / probe['sample2volt']
         assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
+        # attempt at fancy regularization, but this was very slow
+        # from joblib import Parallel, delayed, cpu_count
+        # import sklearn.covariance
+        # cov = sklearn.covariance.GraphicalLassoCV(n_jobs=cpu_count(), assume_centered=True).fit(datr.T)
+        # CCall[icc, :, :] = cov.covariance_
         CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
         # remove the bad channels from the covariance matrix, those get only divided by their rms
         CCall[icc, :, :] = np.dot(datr, datr.T) / datr.shape[1]
