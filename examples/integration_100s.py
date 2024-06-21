@@ -5,9 +5,9 @@ import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 from viz import reports
 
-# TODO automate download of the test data from s3
+# TODO automate download of the test data from s3, should contain imec_385_100s.ap.bin and imec_385_100s.ap.meta
 INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests")
-# INTEGRATION_DATA_PATH = Path("/mnt/s1/spikesorting/integration_tests")
+INTEGRATION_DATA_PATH = Path("/mnt/s1/spikesorting/integration_tests/stand-alone/")
 
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
 shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
@@ -50,6 +50,7 @@ def run_integration_test(bin_file):
     reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
                              raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
                              vmax=0.05, d_bin=5, t_bin=0.001)
+
 
 if __name__ == "__main__":
     run_integration_test(INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin"))

@@ -34,4 +34,4 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 # exclude packages matching these glob patterns
-include = ["pykilosort"]
+include = ["iblsorter", "viz"]
