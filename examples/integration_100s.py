@@ -8,10 +8,8 @@ from viz import reports
 # TODO automate download of the test data from s3, should contain imec_385_100s.ap.bin and imec_385_100s.ap.meta
 INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests")
 INTEGRATION_DATA_PATH = Path("/mnt/s1/spikesorting/integration_tests/stand-alone/")
-
 SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
-shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
-SCRATCH_DIR.mkdir(exist_ok=True)
+
 DELETE = True  # delete the intermediate run products, if False they'll be copied over
 
 override_params = {}
@@ -30,6 +28,10 @@ def run_integration_test(bin_file):
     output_dir = INTEGRATION_DATA_PATH.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
     ks_output_dir = output_dir.joinpath('pykilosort')
     alf_path = ks_output_dir.joinpath('alf')
+
+    # this can't be outside of a function, otherwise each multiprocessing job will execute this code!
+    shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
+    SCRATCH_DIR.mkdir(exist_ok=True)
 
     ks_output_dir.mkdir(parents=True, exist_ok=True)
 

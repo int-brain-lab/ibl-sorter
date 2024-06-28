@@ -15,7 +15,7 @@ from iblsorter import add_default_handler, run, Bunch, __version__
 from iblsorter.params import KilosortParams
 
 
-_logger = logging.getLogger("pykilosort")
+_logger = logging.getLogger(__name__)
 
 
 def _get_multi_parts_records(bin_file):
