@@ -23,13 +23,14 @@ class Probe(BaseModel):
     xc: np.ndarray
     yc: np.ndarray
 
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
     @field_validator("yc")
     def coords_same_length(cls, v, values):
         assert len(values["xc"]) == len(v)
         return v
-
-    class Config:
-        arbitrary_types_allowed = True
 
     @classmethod
     def load_from_npy(cls, rootZ, **kwargs):
