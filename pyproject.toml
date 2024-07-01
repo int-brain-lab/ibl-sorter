@@ -28,10 +28,15 @@ dynamic = ["dependencies", "version"]
 dependencies = {file = ["requirements.txt"]}
 version = {attr = "iblsorter.__version__"}
 
-
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 # exclude packages matching these glob patterns
 include = ["iblsorter", "viz"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_gpu: Tests requires cupy (with gpu & CUDA). Tests that seem pointless without a GPU but still work should *not* use this.",
+]
