@@ -2,7 +2,7 @@ import typing as t
 from math import ceil
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .utils import Bunch
 
@@ -23,7 +23,7 @@ class Probe(BaseModel):
     xc: np.ndarray
     yc: np.ndarray
 
-    @validator("yc")
+    @field_validator("yc")
     def coords_same_length(cls, v, values):
         assert len(values["xc"]) == len(v)
         return v
@@ -51,7 +51,7 @@ class DatashiftParams(BaseModel):
     )
     overwrite: bool = Field(True, description="overwrite proc file with shifted data")
 
-    @validator("nblocks")
+    @field_validator("nblocks")
     def validate_nblocks(v):
         if v < 1:
             raise ValueError(
@@ -121,7 +121,7 @@ class KilosortParams(BaseModel):
     stable_mode: bool = Field(True, description="make output more stable")
     deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
 
-    @validator("deterministic_mode")
+    @field_validator("deterministic_mode")
     def validate_deterministic_mode(cls, v, values):
         if values.get("stable_mode"):
             return v
