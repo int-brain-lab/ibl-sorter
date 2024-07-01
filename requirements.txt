@@ -1,4 +1,5 @@
 click
+cupy-cuda11x
 dartsort @ git+https://github.com/cwindolf/dartsort@main
 dredge @ git+https://github.com/evarol/dredge@main
 hdbscan
@@ -7,7 +8,7 @@ matplotlib
 mock
 numba
 numpy
-ibllib @ git+https://github.com/int-brain-lab/ibllib@spikesorting_rerun
+ibllib @ git+https://github.com/int-brain-lab/ibllib@develop
 ibl-neuropixel >= 1.0.1
 ipython
 phylib >= 2.5.0
