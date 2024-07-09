@@ -2,7 +2,7 @@ import typing as t
 from math import ceil
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, validator
 
 from .utils import Bunch
 
@@ -122,7 +122,7 @@ class KilosortParams(BaseModel):
     stable_mode: bool = Field(True, description="make output more stable")
     deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
 
-    @field_validator("deterministic_mode")
+    @validator("deterministic_mode")
     def validate_deterministic_mode(cls, v, values):
         if values.get("stable_mode"):
             return v
