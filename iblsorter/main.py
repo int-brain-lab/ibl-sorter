@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 
 import numpy as np
 
-from .preprocess import preprocess, get_good_channels, get_whitening_matrix, get_Nbatch, destriping
+from .preprocess import get_good_channels, get_whitening_matrix, get_Nbatch, destriping
 from .cluster import clusterSingleBatches
 from .datashift2 import datashift2
 from .learn import learnAndSolve8b
@@ -22,7 +22,7 @@ def default_probe(raw_data):
 
 
 def run(
-    dat_path: str = None,
+    dat_path: str | list | Path | None = None,
     dir_path: Path = None,
     output_dir: Path = None,
     probe=None,
@@ -35,6 +35,8 @@ def run(
     stop_after: str
         Stop after the given step. Possible values are: whitening_matrix, preprocess, drift_correction, learn, merge, split_1, cutoff
     """
+    if params["low_memory"]:
+        logger.info("Running in low-memory mode.")
 
     # Get or create the probe object.
     if isinstance(probe, (str, Path)):
@@ -51,8 +53,8 @@ def run(
     assert probe
 
     # dir path
-    if type(dat_path) == list:
-        dir_path = dir_path or Path(dat_path[0]).parent
+    if isinstance(dat_path, list):
+        dir_path = Path(dat_path[0]).parent
     else:
         dir_path = dir_path or Path(dat_path).parent
     assert isinstance(dir_path, (PurePath, str)), 'dir_path must be a string or Path object'
@@ -95,7 +97,7 @@ def run(
 
     # channel detection method is either "raw_correlations" or "kilosort" based on the
     # "channel_detection_method" field in params
-    probe.good_channels, probe.channels_labels = get_good_channels(
+    probe.good_channels, probe.channel_labels = get_good_channels(
         raw_data, params, probe, return_labels=True)
     assert probe.Nchan > 0
     
@@ -109,7 +111,7 @@ def run(
         # of the data
         with ctx.time("whitening_matrix"):
             ir.Wrot = get_whitening_matrix(
-                raw_data=raw_data, probe=probe, params=params, qc_path=ctx_path
+                raw_data=raw_data, probe=probe, params=params, qc_path=output_dir
             )
         # Cache the result.
         ctx.write(Wrot=ir.Wrot)
@@ -122,10 +124,7 @@ def run(
     if "preprocess" not in ctx.timer.keys():
         # Do not preprocess again if the proc.dat file already exists.
         with ctx.time("preprocess"):
-            if params.preprocessing_function == 'destriping':
-                destriping(ctx)
-            else:
-                preprocess(ctx)
+            destriping(ctx)
     if stop_after == "preprocess":
         return ctx
 
@@ -152,7 +151,7 @@ def run(
     if params.perform_drift_registration:
         if "drift_correction" not in ctx.timer.keys():
             with ctx.time("drift_correction"):
-                out = datashift2(ctx)
+                out = datashift2(ctx, qc_path=output_dir)
             ctx.save(**out)
     else:
         ctx.intermediate.iorig = np.arange(ctx.intermediate.Nbatch)

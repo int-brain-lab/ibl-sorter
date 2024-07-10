@@ -5,7 +5,7 @@ import cupy as cp
 
 import pytest
 
-from pykilosort.cptools import (
+from iblsorter.cptools import (
     median, lfilter, svdecon, svdecon_cpu, free_gpu_memory,
     convolve_cpu, convolve_gpu, convolve_gpu_direct, convolve_gpu_chunked)
 

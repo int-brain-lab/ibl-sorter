@@ -1477,7 +1477,7 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
 
         _save('channel_map', chanMap0ind)
         _save('channel_positions', np.c_[xcoords, ycoords], np.float32)
-        _save('channel_labels', probe.channels_labels, np.int8)
+        _save('channel_labels', probe.channel_labels, np.int8)
         if shanks is not None:
             _save('channel_shanks', shanks, np.int8)
 

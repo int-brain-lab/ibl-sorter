@@ -1,3 +1,28 @@
+# 1.7
+### 1.7.1
+- bugfix geometry of probes in registration was hard coded to 384 channels
+- bugfix dredge detection memory management sets a number of jobs according to GPU size
+
+# 1.6
+### 1.6a00
+### 1.6a.dev5
+-   reworks datashift2 to use DARTsort spike detection, fed into DREDge motion estimation
+### 1.6a.dev4
+-   uses ibl-neuropixel 1.0.0 that contains the saturation mitigation in the pre-processing
+### 1.6a.dev3
+-   spike hole branch merge with overlap parameter set to 1024
+### 1.6a.dev2
+-   spike hole branch merge with overlap parameter set to 0
+### 1.6a.dev1
+-   adds APR RMS output to pre-processing
+### 1.6a.dev0
+-   outputs `probe.channels.npy` via phylib forced update
+
+# 1.5
+### 1.5.1 bugfix
+- `probes.channel_labels` was referenced in plural in some parts of the code
+### 1.5.0
+- set minFR to 0.02 Hz to avoid too many near empty clusters
 # 1.4
 ### 1.4.5
 - make pykilosort compatible with spikeglx 2023-04

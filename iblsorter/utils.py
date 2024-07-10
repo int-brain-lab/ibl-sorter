@@ -8,33 +8,29 @@ import operator
 import os.path as op
 import re
 from time import perf_counter
-
 from tqdm.auto import tqdm
+
 import numpy as np
 from numpy.lib.format import (
     _check_version, _write_array_header, header_data_from_array_1_0, dtype_to_descr)
 import cupy as cp
+import torch
 
 from phylib.io.traces import get_ephys_reader
+from iblutil.util import Bunch
 
 from .event import emit, connect, unconnect  # noqa
 
 logger = logging.getLogger(__name__)
 
 
+def cuda_installation_test():
+    cp.zeros(10) * 2
+    assert torch.cuda.is_available()
+
+
 def prod(iterable):
     return reduce(operator.mul, iterable, 1)
-
-
-class Bunch(dict):
-    """A subclass of dictionary with an additional dot syntax."""
-    def __init__(self, *args, **kwargs):
-        super(Bunch, self).__init__(*args, **kwargs)
-        self.__dict__ = self
-
-    def copy(self):
-        """Return a new Bunch instance which is a copy of the current Bunch instance."""
-        return Bunch(super(Bunch, self).copy())
 
 
 def copy_bunch(old_bunch):
@@ -405,12 +401,14 @@ class DataLoader(object):
         """Returns the number of batches in the dataset"""
         return int(self.data.shape[0] / self.batch_size)
 
-    def load_batch(self, batch_number, batch_length=None, rescale=True):
+    def load_batch(self, batch_number, batch_length=None, rescale=True, overlap_samples=0):
         """
         Loads a batch and optionally rescales it and move it to the GPU
         :param batch_number: Specifies which batch to load
         :param batch_length: Optional int, length of batch in time samples
         :param rescale: If true, rescales and moves the batch to the GPU
+        :param overlap_samples: Number of time samples to load as overlap at the
+                                beginning and end of the batch
         :return: Loaded batch
         """
         if not batch_length:
@@ -423,9 +421,27 @@ class DataLoader(object):
         #assert batch_number < self.n_batches, \
         #    f'Batch {batch_number} is out of range for data with {self.n_batches} batches'
 
-        batch_cpu = self.data[batch_number * batch_size : (batch_number + 1) * batch_size].reshape(
-            (-1, self.n_channels), order='C'
-        )
+        i = batch_number * batch_size
+        j = (batch_number + 1) * batch_size
+
+        # [CR 2024-04-02]: add support for optional overlap at the beginning of the batch
+        if overlap_samples > 0:
+            overlap_samples = int(overlap_samples)
+
+            # quick consistency check: the overlap should be smaller than the batch length
+            assert overlap_samples > 0 and overlap_samples <= batch_size // self.n_channels
+
+            i -= overlap_samples * self.n_channels
+            j += overlap_samples * self.n_channels
+
+        i = max(0, i)
+        j = min(self.data.shape[0], j)
+
+        assert i >= 0
+        assert j >= i
+        assert j <= self.data.shape[0]
+
+        batch_cpu = self.data[i:j].reshape((-1, self.n_channels), order='C')
 
         if not rescale:
             return np.asfortranarray(batch_cpu)
@@ -434,6 +450,8 @@ class DataLoader(object):
             cp.asarray(batch_cpu, dtype=np.float32) / self.scaling_factor
         )
 
+        # [CR 2024-04-02]: batch_gpu's shape should be (NT + overlap, n_channels), but the overlap
+        # may be lower than overlap_samples if we are in the first batch
         return batch_gpu
 
     def write_batch(self, batch_number, batch_data):

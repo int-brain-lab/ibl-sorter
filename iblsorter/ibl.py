@@ -11,11 +11,11 @@ import neuropixel
 from ibllib.ephys import spikes
 from one.alf.files import get_session_path
 from one.remote import aws
-from pykilosort import add_default_handler, run, Bunch, __version__
-from pykilosort.params import KilosortParams
+from iblsorter import add_default_handler, run, Bunch, __version__
+from iblsorter.params import KilosortParams
 
 
-_logger = logging.getLogger("pykilosort")
+_logger = logging.getLogger(__name__)
 
 
 def _get_multi_parts_records(bin_file):
@@ -63,7 +63,7 @@ def _sample2v(ap_file):
 
 
 def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
-                          ks_output_dir=None, alf_path=None, log_level='INFO', params=None):
+                          ks_output_dir=None, alf_path=None, log_level='INFO', stop_after=None, params=None):
     """
     This runs the spike sorting and outputs the raw pykilosort without ALF conversion
     :param bin_file: binary file full path
@@ -81,6 +81,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     bin_file = _get_multi_parts_records(bin_file)
     scratch_dir.mkdir(exist_ok=True, parents=True)
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
+    ks_output_dir.mkdir(exist_ok=True, parents=True)
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
     add_default_handler(level=log_level)
     add_default_handler(level=log_level, filename=log_file)
@@ -96,12 +97,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
-        run(bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, **params)
-        # move back the QC files to the original probe folder for registration
-        for qc_file in session_scratch_dir.rglob('_iblqc_*'):
-            shutil.copy(qc_file, ks_output_dir.joinpath(qc_file.name))
-        if delete:
-            shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, stop_after=stop_after, **params)
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
@@ -114,16 +110,21 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         s2v = _sample2v(bin_file)
         alf_path.mkdir(exist_ok=True, parents=True)
         spikes.ks2_to_alf(ks_output_dir, bin_file, alf_path, ampfactor=s2v)
+        # move all of the QC outputs to the alf folder as well
+        for qc_file in scratch_dir.rglob('_iblqc_*.png'):
+            shutil.move(qc_file, alf_path.joinpath(qc_file.name))
+        for qc_file in scratch_dir.rglob('_iblqc_*.png'):
+            shutil.move(qc_file, alf_path.joinpath(qc_file.name))
+    # in production, we remove all of the temporary files after the run
+    if delete:
+        shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
 
 
 def ibl_pykilosort_params(bin_file):
     params = KilosortParams()
-    params.preprocessing_function = 'destriping'
     params.channel_detection_method = 'raw_correlations'
+    params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
-    # params.minFR = 0
-    # params.minfr_goodchannels = 0
-    # params = {k: dict(params)[k] for k in sorted(dict(params))}
     return dict(params)
 
 

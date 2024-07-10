@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ibl-sorter"
+description = "IBL Spike Sorter for Neuropixel recordings"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "IBL staff", email = "info@internationalbrainlab.org"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dynamic = ["dependencies", "version"]
+
+[project.urls]
+"Homepage" = "https://github.com/int-brain-lab/ibl-sorter"
+"ChangeLog" = "https://github.com/int-brain-lab/ibl-sorter/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/int-brain-lab/ibl-sorter/issues"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+version = {attr = "iblsorter.__version__"}
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+# exclude packages matching these glob patterns
+include = ["iblsorter", "viz"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_gpu: Tests requires cupy (with gpu & CUDA). Tests that seem pointless without a GPU but still work should *not* use this.",
+]

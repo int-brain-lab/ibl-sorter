@@ -2,7 +2,7 @@ import typing as t
 from math import ceil
 
 import numpy as np
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, validator
 
 from .utils import Bunch
 
@@ -23,13 +23,14 @@ class Probe(BaseModel):
     xc: np.ndarray
     yc: np.ndarray
 
-    @validator("yc")
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
+
+    @field_validator("yc")
     def coords_same_length(cls, v, values):
         assert len(values["xc"]) == len(v)
         return v
-
-    class Config:
-        arbitrary_types_allowed = True
 
     @classmethod
     def load_from_npy(cls, rootZ, **kwargs):
@@ -51,7 +52,7 @@ class DatashiftParams(BaseModel):
     )
     overwrite: bool = Field(True, description="overwrite proc file with shifted data")
 
-    @validator("nblocks")
+    @field_validator("nblocks")
     def validate_nblocks(v):
         if v < 1:
             raise ValueError(
@@ -68,13 +69,12 @@ class KilosortParams(BaseModel):
     
     seed: t.Optional[int] = Field(42, description="seed for deterministic output")
     
-    preprocessing_function: str = Field('kilosort2', description='pre-processing function used choices'
-                                                                 'are "kilosort2" or "destriping"')
-    
     channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
                                                                      'are "raw_correlations" or "kilosort"')
     
     save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
+    
+    save_drift_estimates: bool = Field(False, description='save estimated probe drift')
     
     perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
 
@@ -89,6 +89,9 @@ class KilosortParams(BaseModel):
     data_dtype: str = Field('int16', description='data type of raw data')
 
     n_channels: int = Field(385, description='number of channels in the data recording')
+
+    # [CR 2024-04-02]: add support for optional overlap at the beginning and end of each batch
+    overlap_samples: int = Field(0, description='number of overlap time samples to load at the beginning and end of each batch in the main template matching algorithm')
 
     probe: t.Optional[Probe] = Field(None, description="recording probe metadata")
 
@@ -135,7 +138,7 @@ class KilosortParams(BaseModel):
     )
 
     Th: t.List[float] = Field(
-        [10, 4],
+        [6, 3],
         description="""
         threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
     """,

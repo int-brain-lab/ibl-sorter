@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.signal
-from neurodsp import voltage
-from neurodsp.utils import rms
+from ibldsp import voltage
+from ibldsp.utils import rms
 import spikeglx
 import brainbox.plot as bbplot
 import one.alf.io as alfio
