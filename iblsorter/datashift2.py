@@ -632,6 +632,9 @@ def datashift2(ctx, qc_path=None):
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
     motion_est, dshift, yblk = get_dredge_drift(spikes, params)
+    if yblk is None and dshift.ndim == 1:
+        yblk = np.atleast_1d(np.median(ctx.probe['y']))
+        dshift = dshift[:, np.newaxis]
 
     if qc_path is not None:
         iblsorter.qc.plot_motion_correction(motion_est, spikes, qc_path)
