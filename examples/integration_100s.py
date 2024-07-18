@@ -7,8 +7,8 @@ from viz import reports
 
 # TODO automate download of the test data from s3, should contain imec_385_100s.ap.bin and imec_385_100s.ap.meta
 INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests") # parede
-INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
-SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
+# INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
+SCRATCH_DIR = Path.home().joinpath("scratch", 'iblsort')
 
 DELETE = True  # delete the intermediate run products, if False they'll be copied over
 
