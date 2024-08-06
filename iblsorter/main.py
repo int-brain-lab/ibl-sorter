@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path, PurePath
 
 import numpy as np
+from math import ceil
 
 from .preprocess import get_good_channels, get_whitening_matrix, get_Nbatch, destriping
 from .cluster import clusterSingleBatches
@@ -28,6 +29,7 @@ def run(
     probe=None,
     stop_after=None,
     clear_context=False,
+    do_preprocessing=True,
     **params,
 ):
     """Launch KiloSort 2.
@@ -78,6 +80,16 @@ def run(
     ctx.raw_probe = copy_bunch(probe)
     ctx.raw_data = raw_data
 
+    
+    if not do_preprocessing and not ctx.path("proc", ".dat").exists():
+        shutil.copy(dat_path, ctx.path("proc", ".dat"))
+        ns2add = ceil(raw_data.n_samples / params.NT) * params.NT - raw_data.n_samples
+        bytes2add = int(ns2add * 384 * np.dtype(params.data_dtype).itemsize)
+        print(bytes2add)
+        with open(ctx.path("proc", ".dat"), "ab") as f:
+            f.write(b"\x00" * bytes2add)
+        logger.info("Skipping preprocessing, raw data copied to proc.dat")
+
     # Load the intermediate results to avoid recomputing things.
     ctx.load()
     # TODO: unclear - what if we have changed something e.g. a parameter? Shouldn't
@@ -121,7 +133,8 @@ def run(
     # -------------------------------------------------------------------------
     # Preprocess data to create proc.dat
     ir.proc_path = ctx.path("proc", ".dat")
-    if "preprocess" not in ctx.timer.keys():
+    if "preprocess" not in ctx.timer.keys() and do_preprocessing:
+        
         # Do not preprocess again if the proc.dat file already exists.
         with ctx.time("preprocess"):
             destriping(ctx)
@@ -131,7 +144,7 @@ def run(
     # Open the proc file.
     # NOTE: now we are always in Fortran order.
     assert ir.proc_path.exists()
-    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc)
+    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc, dtype=np.float16)
 
     # -------------------------------------------------------------------------
     # # Time-reordering as a function of drift.
