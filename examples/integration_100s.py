@@ -1,14 +1,22 @@
 import shutil
 from pathlib import Path
+import sys
 
 import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 from viz import reports
 
+location = sys.argv[1]
+assert location in ["parede", "server"]
+
 # TODO automate download of the test data from s3, should contain imec_385_100s.ap.bin and imec_385_100s.ap.meta
-INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests") # parede
-INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
-SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
+if location == "parede":
+    INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests")
+    SCRATCH_DIR = Path.home().joinpath("scratch", 'pykilosort')
+
+else:
+    INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
+    SCRATCH_DIR = Path("/mnt/h0/iblsort")
 
 DELETE = True  # delete the intermediate run products, if False they'll be copied over
 
@@ -25,7 +33,7 @@ def run_integration_test(bin_file):
 
     :param bin_file:
     """
-    output_dir = INTEGRATION_DATA_PATH.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
+    output_dir = INTEGRATION_DATA_PATH.joinpath(iblsorter.__version__ + label, bin_file.name.split('.')[0])
     ks_output_dir = output_dir.joinpath('pykilosort')
     alf_path = ks_output_dir.joinpath('alf')
 
