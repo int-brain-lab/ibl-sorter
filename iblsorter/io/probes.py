@@ -27,6 +27,16 @@ def np2_probe():
     return probe
 
 
+def npultra_probe():
+    """ Returns a Neuropixels UHD probe as a Bunch object for use in pykilosort """
+    probe = Bunch()
+    probe.NchanTOT = 385
+    probe.chanMap = np.arange(384)
+    probe.xc = np.tile(np.array([0., 6., 12., 18., 24., 30., 36., 42.]), 48)
+    probe.yc = np.repeat(np.arange(0., 288., 6), 8)
+    probe.kcoords = np.zeros(384)
+
+
 def get_4shank_channels_np2(shank):
     """
     Returns the channel indices for a given shank on a np2 4 shank probe
