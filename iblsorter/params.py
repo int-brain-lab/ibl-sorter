@@ -2,7 +2,7 @@ import typing as t
 from math import ceil
 
 import numpy as np
-from pydantic import BaseModel, Field, validator, field_validator
+from pydantic import BaseModel, Field, field_validator, validator
 
 from .utils import Bunch
 

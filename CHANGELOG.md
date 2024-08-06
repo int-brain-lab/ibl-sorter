@@ -1,4 +1,9 @@
 # 1.7
+### 1.7.3
+- Update installation instructions for using `cupy` alongside torch
+- Remove some PyDantic and NumPy deprecations
+- Reworked integration test
+
 ### 1.7.1
 - bugfix geometry of probes in registration was hard coded to 384 channels
 - bugfix dredge detection memory management sets a number of jobs according to GPU size
