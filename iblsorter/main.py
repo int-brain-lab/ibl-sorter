@@ -144,7 +144,7 @@ def run(
     # Open the proc file.
     # NOTE: now we are always in Fortran order.
     assert ir.proc_path.exists()
-    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc, dtype=np.float16)
+    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc, dtype=params.data_dtype)
 
     # -------------------------------------------------------------------------
     # # Time-reordering as a function of drift.
