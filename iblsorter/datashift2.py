@@ -649,7 +649,7 @@ def datashift2(ctx, qc_path=None):
         dat = ir.data_loader.load_batch(ibatch, rescale=False)
 
         # align via kriging interpolation
-        data_shifted = apply_drift_transform(dat, dshift[ibatch, :], yblk, probe, params.sig_datashift)
+        data_shifted = apply_drift_transform(dat, dshift[ibatch, :], yblk, probe, params.sig_datashift).astype(np.dtype(params.data_dtype))
 
         # write the aligned data back to the same file
         ir.data_loader.write_batch(ibatch, data_shifted)

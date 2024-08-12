@@ -71,6 +71,9 @@ class KilosortParams(BaseModel):
     
     channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
                                                                      'are "raw_correlations" or "kilosort"')
+
+    skip_preprocessing: bool = Field(False, description='skip IBL destriping if the bin file is already'
+                                                                                            'preprocessed')
     
     save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
     
