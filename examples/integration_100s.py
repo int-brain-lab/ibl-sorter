@@ -1,13 +1,19 @@
 import shutil
 from pathlib import Path
+import sys
 
 import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 from viz import reports
 
+location = sys.argv[1]
+
 # TODO automate download of the test data from s3, should contain imec_385_100s.ap.bin and imec_385_100s.ap.meta
-INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests") # parede
-# INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
+if location == "server":
+    INTEGRATION_DATA_PATH = Path("/mnt/s0/spikesorting/integration_tests/stand-alone/") # steinmetzlab
+else:    
+    INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests") # parede
+    
 SCRATCH_DIR = Path.home().joinpath("scratch", 'iblsort')
 
 DELETE = True  # delete the intermediate run products, if False they'll be copied over
