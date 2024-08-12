@@ -60,6 +60,48 @@ class DatashiftParams(BaseModel):
             )
         return v
 
+class MotionEstimationParams(BaseModel):
+    """
+    See https://github.com/evarol/dredge/blob/main/python/dredge/dredge_ap.py
+    """
+
+    bin_um: float = Field(1.0)
+    bin_s: float = Field(1.0)
+    
+    max_dt_s: float = Field(1000.)
+    mincorr: float = Field(0.1)
+
+    win_shape: str = Field("gaussian")
+    win_step_um: float = Field(400.)
+    win_scale_um: float = Field(450.)
+
+    # default depends on other parameters
+    max_disp_um: float | None = Field(None, description="", validate_default=True) 
+    @field_validator("max_disp_um")
+    def set_max_disp_um(cls, v, values):
+        return v or values.data["win_scale_um"] / 4.
+
+    # default depends on other parameters
+    win_margin_um: float | None = Field(None, description="", validate_default=True)  ## -win_scale_um / 2
+    def set_win_margin_um(cls, v, values):
+        return v or -values.data["win_scale_um"] / 2.
+
+    # weights parameters
+    do_window_weights: bool = Field(True)
+    weights_threshold_low: float = Field(0.2)
+    weights_threshold_high: float = Field(0.2)
+    mincorr_percentile: float | None = Field(None)
+    mincorr_percentile_nneighbs: float | None = Field(None)
+
+    # raster parameters
+    # amp_scale_fn=None,
+    # post_transform=np.log1p,
+    gaussian_smoothing_sigma_um: float = Field(1)
+    gaussian_smoothing_sigma_s: float = Field(1)
+    avg_in_bin: bool = Field(False)
+    count_masked_correlation: bool = Field(False)
+    count_bins: int = Field(401)
+    count_bin_min: int = Field(2)
 
 class KilosortParams(BaseModel):
     

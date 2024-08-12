@@ -28,6 +28,7 @@ def run(
     probe=None,
     stop_after=None,
     clear_context=False,
+    motion_params=None,
     **params,
 ):
     """Launch KiloSort 2.
@@ -45,6 +46,9 @@ def run(
     # Get params.
     params = KilosortParams(**params or {})
     assert params
+
+    # motion params
+    motion_params = motion_params or MotionEstimationParams()
 
     raw_data = RawDataLoader(dat_path, **params.ephys_reader_args)
 
@@ -74,6 +78,7 @@ def run(
 
     ctx = Context(ctx_path)
     ctx.params = params
+    ctx.motion_params = motion_params
     ctx.probe = probe
     ctx.raw_probe = copy_bunch(probe)
     ctx.raw_data = raw_data

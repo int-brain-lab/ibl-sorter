@@ -580,15 +580,13 @@ def get_drift(spikes, probe, Nbatches, nblocks=5, genericSpkTh=10):
     return dshift, yblk
 
 
-def get_dredge_drift(spikes, params):
+def get_dredge_drift(spikes, params, motion_params):
     
     motion_est, _ = dredge_ap.register(
         spikes.amps,
         spikes.depths,
         spikes.times,
-        bin_s=params.NT / params.fs,
-        gaussian_smoothing_sigma_s=params.NT / params.fs,
-        mincorr=0.5,
+        **dict(motion_params)
     )
     
     dshift = -motion_est.displacement.T
@@ -632,7 +630,7 @@ def datashift2(ctx, qc_path=None):
         np.save(drift_path / 'spike_depths.npy', spikes.depths)
         np.save(drift_path / 'spike_amps.npy', spikes.amps)
 
-    motion_est, dshift, yblk = get_dredge_drift(spikes, params)
+    motion_est, dshift, yblk = get_dredge_drift(spikes, params, ctx.motion_params)
     if yblk is None and dshift.ndim == 1:
         yblk = np.atleast_1d(np.median(ctx.probe['y']))
         dshift = dshift[:, np.newaxis]
