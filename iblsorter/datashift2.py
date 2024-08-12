@@ -442,34 +442,35 @@ def dartsort_detector(ctx, probe, params):
     rec = rec.astype("float32")
     ns = rec.get_total_samples()
 
-    # un-whiten the data to be fed into the dartsort spike detector
-    # ignore OOB channels prior to computing a pseudoinverse of Wrot
-    Wrot = cp.asnumpy(ctx.intermediate.Wrot)
-    W = np.eye(probe.Nchan)
-    oob = probe.channel_labels != 3.
-    idx = np.ix_(oob, oob)
-    W[idx] = np.linalg.pinv(Wrot[idx])
-    W /= params.scaleproc
-
-    # transform the data to standard units via z-scoring, i.e. Z = (X-MU)/STDEV
-    # estimate the STDEV and MU vectors from chunks throughout recording
-    nchunk = 25
-    t0s = np.linspace(10, ns / params.fs - 10, nchunk)
-    stds = np.zeros((nchunk, probe.Nchan))
-    mus = np.zeros((nchunk, probe.Nchan))
-    for icc, t0 in enumerate(tqdm(t0s)):
-        s0, s1 = int(t0 * params.fs), int((t0 + 0.4) * params.fs)
-        # z-scoring is after unwhitening
-        chunk = W @ rec.get_traces(0, s0, s1).T
-        stds[icc, :] = np.std(chunk, axis=1)
-        mus[icc, :] = np.mean(chunk, axis=1)
-
-    std = np.median(stds, axis=0)
-    mu = np.median(mus, axis=0)
-
-    W[idx] /= std[oob]
-
-    rec = si.whiten(rec, W=W, M=mu, apply_mean=True)
+    if not params.skip_unwhiten_before_drift:
+        # un-whiten the data to be fed into the dartsort spike detector
+        # ignore OOB channels prior to computing a pseudoinverse of Wrot
+        Wrot = cp.asnumpy(ctx.intermediate.Wrot)
+        W = np.eye(probe.Nchan)
+        oob = probe.channel_labels != 3.
+        idx = np.ix_(oob, oob)
+        W[idx] = np.linalg.pinv(Wrot[idx])
+        W /= params.scaleproc
+    
+        # transform the data to standard units via z-scoring, i.e. Z = (X-MU)/STDEV
+        # estimate the STDEV and MU vectors from chunks throughout recording
+        nchunk = 25
+        t0s = np.linspace(10, ns / params.fs - 10, nchunk)
+        stds = np.zeros((nchunk, probe.Nchan))
+        mus = np.zeros((nchunk, probe.Nchan))
+        for icc, t0 in enumerate(tqdm(t0s)):
+            s0, s1 = int(t0 * params.fs), int((t0 + 0.4) * params.fs)
+            # z-scoring is after unwhitening
+            chunk = W @ rec.get_traces(0, s0, s1).T
+            stds[icc, :] = np.std(chunk, axis=1)
+            mus[icc, :] = np.mean(chunk, axis=1)
+    
+        std = np.median(stds, axis=0)
+        mu = np.median(mus, axis=0)
+    
+        W[idx] /= std[oob]
+    
+        rec = si.whiten(rec, W=W, M=mu, apply_mean=True)
 
     # now run DARTsort thresholding to get spike times, amps, positions
     channel_index = torch.tensor(dartsort.make_channel_index(geom, 100.0))

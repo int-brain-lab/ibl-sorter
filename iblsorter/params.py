@@ -81,6 +81,8 @@ class KilosortParams(BaseModel):
     
     perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
 
+    skip_unwhiten_before_drift: bool = Field(False, description='skip unwhitening operation prior to estimating drift')
+    
     normalisation: str = Field('whitening', description=
     'Normalisation strategy. Choices are: '
     '"whitening": uses the inverse of the covariance matrix,'
