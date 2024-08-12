@@ -91,12 +91,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     if params is None:
         params = ibl_pykilosort_params(bin_file)
     if motion_params is None:
-        # neuropixels 1/2 Dredge configs
-        motion_params = MotionEstimationParams(
-            bin_s=params.NT / params.fs,
-            gaussian_smoothing_sigma_s=params.NT / params.fs,
-            mincorr=0.5
-        )
+        motion_params = ibl_dredge_params(params)
     try:
         _logger.info(f"Starting Pykilosort version {__version__}")
         _logger.info(f"Scratch dir {scratch_dir}")
@@ -105,7 +100,8 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
-        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, stop_after=stop_after, **params)
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, 
+            stop_after=stop_after, motion_params=motion_params, **params)
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
@@ -135,6 +131,15 @@ def ibl_pykilosort_params(bin_file):
     params.probe = probe_geometry(bin_file)
     return dict(params)
 
+def ibl_dredge_params(pyks_params):
+    # neuropixels 1/2 Dredge configs
+    motion_params = MotionEstimationParams(
+        bin_s=pyks_params.NT / pyks_params.fs,
+        gaussian_smoothing_sigma_s=pyks_params.NT / pyks_params.fs,
+        mincorr=0.5
+    )
+
+    return motion_params
 
 def probe_geometry(bin_file):
     """
