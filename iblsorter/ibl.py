@@ -134,8 +134,8 @@ def ibl_pykilosort_params(bin_file):
 def ibl_dredge_params(pyks_params):
     # neuropixels 1/2 Dredge configs
     motion_params = MotionEstimationParams(
-        bin_s=pyks_params.NT / pyks_params.fs,
-        gaussian_smoothing_sigma_s=pyks_params.NT / pyks_params.fs,
+        bin_s=pyks_params["NT"] / pyks_params["fs"],
+        gaussian_smoothing_sigma_s=pyks_params["NT"] / pyks_params["fs"],
         mincorr=0.5
     )
 
