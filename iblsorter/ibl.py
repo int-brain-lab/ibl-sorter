@@ -101,7 +101,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
 
         run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, 
-            stop_after=stop_after, motion_params=motion_params, **params)
+            stop_after=stop_after, motion_params=motion_params, **dict(params))
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
@@ -129,13 +129,13 @@ def ibl_pykilosort_params(bin_file):
     params.channel_detection_method = 'raw_correlations'
     params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
-    return dict(params)
+    return params
 
 def ibl_dredge_params(pyks_params):
     # neuropixels 1/2 Dredge configs
     motion_params = MotionEstimationParams(
-        bin_s=pyks_params["NT"] / pyks_params["fs"],
-        gaussian_smoothing_sigma_s=pyks_params["NT"] / pyks_params["fs"],
+        bin_s=pyks_params.NT / pyks_params.fs,
+        gaussian_smoothing_sigma_s=pyks_params.NT / pyks_params.fs,
         mincorr=0.5
     )
 
