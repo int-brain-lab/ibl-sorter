@@ -83,6 +83,7 @@ class MotionEstimationParams(BaseModel):
 
     # default depends on other parameters
     win_margin_um: float | None = Field(None, description="", validate_default=True)  ## -win_scale_um / 2
+    @field_validator("win_margin_um")
     def set_win_margin_um(cls, v, values):
         return v or -values.data["win_scale_um"] / 2.
 
