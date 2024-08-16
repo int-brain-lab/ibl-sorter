@@ -85,7 +85,7 @@ def run(
 
     if params.skip_preprocessing and not ctx.path("proc", ".dat").exists():
         shutil.copy(dat_path, ctx.path("proc", ".dat"))
-        ns2add = ceil(raw_data.n_samples / params.NT) * params.NT - raw_data.n_samples
+        ns2add = np.ceil(raw_data.n_samples / params.NT) * params.NT - raw_data.n_samples
         bytes2add = int(ns2add * params.n_channels * np.dtype(params.data_dtype).itemsize)
         print(bytes2add)
         with open(ctx.path("proc", ".dat"), "ab") as f:
