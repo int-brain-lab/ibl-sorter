@@ -442,7 +442,7 @@ def dartsort_detector(ctx, probe, params):
     rec = rec.astype("float32")
     ns = rec.get_total_samples()
 
-    if not params.skip_unwhiten_before_drift:
+    if params.unwhiten_before_drift:
         # un-whiten the data to be fed into the dartsort spike detector
         # ignore OOB channels prior to computing a pseudoinverse of Wrot
         Wrot = cp.asnumpy(ctx.intermediate.Wrot)
