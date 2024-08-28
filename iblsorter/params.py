@@ -1,5 +1,5 @@
-import typing as t
 from math import ceil
+from typing import List, Optional, Tuple, Literal, Union
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator, validator
@@ -12,10 +12,10 @@ from .utils import Bunch
 
 class Probe(BaseModel):
     NchanTOT: int
-    Nchan: t.Optional[int] = Field(
+    Nchan: Optional[int] = Field(
         None, description="Nchan < NchanTOT if some channels should not be used."
     )
-    shank: t.Optional[np.ndarray] = Field(
+    shank: Optional[np.ndarray] = Field(
         None, description="Channel shanks labels"
     )
     chanMap: np.ndarray  # TODO: add constraints
@@ -47,7 +47,7 @@ class DatashiftParams(BaseModel):
     nblocks: int = Field(
         5, description="blocks for registration. 1 does rigid registration."
     )
-    output_filename: t.Optional[str] = Field(
+    output_filename: Optional[str] = Field(
         None, description="optionally save registered data to a new binary file"
     )
     overwrite: bool = Field(True, description="overwrite proc file with shifted data")
@@ -60,182 +60,114 @@ class DatashiftParams(BaseModel):
             )
         return v
 
+class MotionEstimationParams(BaseModel):
+    """
+    See https://github.com/evarol/dredge/blob/main/python/dredge/dredge_ap.py
+    """
+
+    bin_um: float = Field(1.0)
+    bin_s: float = Field(1.0)
+    
+    max_dt_s: float = Field(1000.)
+    mincorr: float = Field(0.1)
+
+    win_shape: str = Field("gaussian")
+    win_step_um: float = Field(400.)
+    win_scale_um: float = Field(450.)
+
+    # default depends on other parameters
+    max_disp_um: float | None = Field(None, description="", validate_default=True) 
+    @field_validator("max_disp_um")
+    def set_max_disp_um(cls, v, values):
+        return v or values.data["win_scale_um"] / 4.
+
+    # default depends on other parameters
+    win_margin_um: float | None = Field(None, description="", validate_default=True)  ## -win_scale_um / 2
+    @field_validator("win_margin_um")
+    def set_win_margin_um(cls, v, values):
+        return v or -values.data["win_scale_um"] / 2.
+
+    # weights parameters
+    do_window_weights: bool = Field(True)
+    weights_threshold_low: float = Field(0.2)
+    weights_threshold_high: float = Field(0.2)
+    mincorr_percentile: float | None = Field(None)
+    mincorr_percentile_nneighbs: float | None = Field(None)
+
+    # raster parameters
+    # amp_scale_fn=None,
+    # post_transform=np.log1p,
+    gaussian_smoothing_sigma_um: float = Field(1)
+    gaussian_smoothing_sigma_s: float = Field(1)
+    avg_in_bin: bool = Field(False)
+    count_masked_correlation: bool = Field(False)
+    count_bins: int = Field(401)
+    count_bin_min: int = Field(2)
+
+
+class ChannelDetectionParamsRawCorrelations(BaseModel):
+    psd_hf_threshold: float = Field(.02, description="Threshold power spectral density above which the PSD at 0.8 Nyquist is considered noisy (units: uV ** 2 / Hz ")
+    similarity_threshold: Optional[Tuple[float]] = Field((-.5, 1), description="similarity threshold for channel detection")
+
 
 class KilosortParams(BaseModel):
-    
-    low_memory: bool = Field(
-        False, description='low memory setting for running chronic recordings'
-    )
-    
-    seed: t.Optional[int] = Field(42, description="seed for deterministic output")
-    
-    channel_detection_method: str = Field('kilosort', description = 'channel detection methods choices'
-                                                                     'are "raw_correlations" or "kilosort"')
-    
-    save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
-    
-    save_drift_estimates: bool = Field(False, description='save estimated probe drift')
-    
-    perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
-
-    normalisation: str = Field('whitening', description=
-    'Normalisation strategy. Choices are: '
+    AUCsplit: float = Field(0.9,description="""splitting a cluster at the end requires at least this much isolation for each sub-cluster (max=1)""")
+    Nfilt: Optional[int] = None  # This should be a computed property once we add the probe to the config
+    Th: List[float] = Field([6, 3],description="""threshold on projections (like in Kilosort1, can be different for last pass like [10 4])""",)
+    ThPre: float = Field(8,description="threshold crossings for pre-clustering (in PCA projection space)",)
+    channel_detection_method: Literal['kilosort', 'raw_correlations'] = Field(
+        'kilosort', description='Method to detect faulty channels, kilosort uses firing rate, raw_correlations uses PSD and similarity')
+    channel_detection_parameters: Optional[ChannelDetectionParamsRawCorrelations] = Field(
+        ChannelDetectionParamsRawCorrelations(), description='parameters for raw correlation channel detection option')
+    data_dtype: str = Field('int16', description='data type of raw data')
+    datashift: Optional[DatashiftParams] = Field(None, description="parameters for 'datashift' drift correction. not required")
+    deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
+    fs: float = Field(30000.0, description="sample rate")
+    fshigh: float = Field(300.0, description="high pass filter frequency")
+    fslow: Optional[float] = Field(None, description="low pass filter frequency")
+    gain: int = 1
+    genericSpkTh: float = Field(8.0, description="threshold for crossings with generic templates")
+    lam: float = Field(10,description="""how important is the amplitude penalty (like in Kilosort1, 0 means not used,10 is average, 50 is a lot)""")
+    loc_range: List[int] = [5, 4]
+    long_range: List[int] = [30, 6]
+    low_memory: bool = Field(False, description='low memory setting for running chronic recordings')
+    minFR: float = Field(1.0 / 50,description="""minimum spike rate (Hz), if a cluster falls below this for too long it gets removed""",)
+    minfr_goodchannels: float = Field(0, description="minimum firing rate on a 'good' channel (0 to skip)")
+    momentum: List[float] = Field([20, 400],description="""number of samples to average over (annealed from first to second value)""")
+    normalisation: Literal['whitening', 'zscore', 'global zscore'] = Field('whitening', description='Normalisation strategy. Choices are: '
     '"whitening": uses the inverse of the covariance matrix,'
     '"zscore": uses individual channel normalisation,'
     '"global zscore" for median channel normalisation')
-
-    fs: float = Field(30000.0, description="sample rate")
-
-    data_dtype: str = Field('int16', description='data type of raw data')
-
-    n_channels: int = Field(385, description='number of channels in the data recording')
-
-    # [CR 2024-04-02]: add support for optional overlap at the beginning and end of each batch
-    overlap_samples: int = Field(0, description='number of overlap time samples to load at the beginning and end of each batch in the main template matching algorithm')
-
-    probe: t.Optional[Probe] = Field(None, description="recording probe metadata")
-
-    save_temp_files: bool = Field(
-        True, description="keep temporary files created while running"
-    )
-
-    fshigh: float = Field(300.0, description="high pass filter frequency")
-    fslow: t.Optional[float] = Field(None, description="low pass filter frequency")
-    minfr_goodchannels: float = Field(
-        0, description="minimum firing rate on a 'good' channel (0 to skip)"
-    )
-
-    genericSpkTh: float = Field(
-        8.0, description="threshold for crossings with generic templates"
-    )
-    nblocks: int = Field(
-        5,
-        description="number of blocks used to segment the probe when tracking drift, 0 == don't track, 1 == rigid, > 1 == non-rigid",
-    )
-    output_filename: t.Optional[str] = Field(
-        None, description="optionally save registered data to a new binary file"
-    )
-    overwrite: bool = Field(True, description="overwrite proc file with shifted data")
-
-    sig_datashift: float = Field(20.0, description="sigma for the Gaussian process smoothing")
-
-    stable_mode: bool = Field(True, description="make output more stable")
-    deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
-
-    @validator("deterministic_mode")
-    def validate_deterministic_mode(cls, v, values):
-        if values.get("stable_mode"):
-            return v
-        else:
-            if v:
-                warning = "stablemode must be enabled for deterministic results; " \
-                          "disabling deterministicmode"
-                raise UserWarning(warning)
-            return False
-
-    datashift: t.Optional[DatashiftParams] = Field(
-        None, description="parameters for 'datashift' drift correction. not required"
-    )
-
-    Th: t.List[float] = Field(
-        [6, 3],
-        description="""
-        threshold on projections (like in Kilosort1, can be different for last pass like [10 4])
-    """,
-    )
-    ThPre: float = Field(
-        8,
-        description="threshold crossings for pre-clustering (in PCA projection space)",
-    )
-
-    lam: float = Field(
-        10,
-        description="""
-        how important is the amplitude penalty (like in Kilosort1, 0 means not used,
-        10 is average, 50 is a lot)
-    """,
-    )
-
-    AUCsplit: float = Field(
-        0.9,
-        description="""
-        splitting a cluster at the end requires at least this much isolation for each sub-cluster (max=1)
-    """,
-    )
-
-    minFR: float = Field(
-        1.0 / 50,
-        description="""
-        minimum spike rate (Hz), if a cluster falls below this for too long it gets removed
-    """,
-    )
-
-    momentum: t.List[float] = Field(
-        [20, 400],
-        description="""
-        number of samples to average over (annealed from first to second value)
-    """,
-    )
-
-    sigmaMask: float = Field(
-        30,
-        description="""
-        spatial constant in um for computing residual variance of spike
-    """,
-    )
-
-    # danger, changing these settings can lead to fatal errors
-    # options for determining PCs
-    spkTh: float = Field(-6, description="spike threshold in standard deviations")
-    reorder: int = Field(
-        1, description="whether to reorder batches for drift correction."
-    )
-    nskip: int = Field(
-        5, description="how many batches to skip for determining spike PCs"
-    )
-    nSkipCov: int = Field(
-        25, description="compute whitening matrix from every nth batch"
-    )
-
-    # GPU = 1  # has to be 1, no CPU version yet, sorry
-    # Nfilt = 1024 # max number of clusters
-    nfilt_factor: int = Field(
-        4, description="max number of clusters per good channel (even temporary ones)"
-    )
-    ntbuff: int = Field(
-        64,
-        description="""
-    samples of symmetrical buffer for whitening and spike detection
-    
-    Must be multiple of 32 + ntbuff. This is the batch size (try decreasing if out of memory).
-    """,
-    )
-
-    whiteningRange: int = Field(
-        32, description="number of channels to use for whitening each channel"
-    )
-    nSkipCov: int = Field(
-        25, description="compute whitening matrix from every N-th batch"
-    )
-    scaleproc: int = Field(200, description="int16 scaling of whitened data")
     nPCs: int = Field(3, description="how many PCs to project the spikes into")
-
+    nSkipCov: int = Field(25, description="compute whitening matrix from every N-th batch")
+    n_channels: int = Field(385, description='number of channels in the data recording')
+    nblocks: int = Field(5, description="number of blocks used to segment the probe when tracking drift, 0 == don't track, 1 == rigid, > 1 == non-rigid")
+    nfilt_factor: int = Field(4, description="max number of clusters per good channel (even temporary ones)")
+    nskip: int = Field(5, description="how many batches to skip for determining spike PCs")
     nt0: int = 61
+    ntbuff: int = Field(64,description="""samples of symmetrical buffer for whitening and spike detection Must be multiple of 32 + ntbuff. This is the batch size (try decreasing if out of memory).""",)
     nup: int = 10
+    output_filename: Optional[str] = Field(None, description="optionally save registered data to a new binary file")
+    overlap_samples: int = Field(0, description='number of overlap time samples to load at the beginning and end of each batch in the main template matching algorithm')
+    overwrite: bool = Field(True, description="overwrite proc file with shifted data")
+    perform_drift_registration: bool = Field(True, description='Estimate electrode drift and apply registration')
+    probe: Optional[Probe] = Field(None, description="recording probe metadata")
+    read_only: bool = Field(False, description='Read only option for raw data') # TODO: Make this true by default
+    reorder: bool = Field(True, description="whether to reorder batches for drift correction.")
+    save_drift_estimates: bool = Field(False, description='save estimated probe drift')
+    save_drift_spike_detections: bool = Field(False, description='save detected spikes in drift correction')
+    save_temp_files: bool = Field(        True, description="keep temporary files created while running")
+    scaleproc: int = Field(200, description="int16 scaling of whitened data")
+    seed: Optional[int] = Field(42, description="seed for deterministic output")
     sig: int = 1
-    gain: int = 1
-
+    sig_datashift: float = Field(20.0, description="sigma for the Gaussian process smoothing")
+    sigmaMask: float = Field(30, description="""spatial constant in um for computing residual variance of spike""")
+    skip_preprocessing: bool = Field(False, description='skip IBL destriping if the bin file is already preprocessed')
+    spkTh: float = Field(-6, description="spike threshold in standard deviations")
+    stable_mode: bool = Field(True, description="make output more stable")
     templateScaling: float = 20.0
-
-    loc_range: t.List[int] = [5, 4]
-    long_range: t.List[int] = [30, 6]
-
-    Nfilt: t.Optional[
-        int
-    ] = None  # This should be a computed property once we add the probe to the config
-
-    # TODO: Make this true by default
-    read_only: bool = Field(False, description='Read only option for raw data')
+    unwhiten_before_drift: bool = Field(True, description='perform unwhitening operation prior to estimating drift')
+    whiteningRange: int = Field(32, description="number of channels to use for whitening each channel")
 
     # Computed properties
     @property
