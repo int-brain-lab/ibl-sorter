@@ -19,27 +19,30 @@ from pathlib import Path
 
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 
-data_path = Path("/mnt/s0/spike_sorting/integration_tests")  # path on which the raw data will be downloaded
-scratch_dir = Path.home().joinpath("scratch",
-                                   'iblsorter')  # temporary path on which intermediate raw data will be written, we highly recommend a SSD drive
-ks_output_dir = Path("/mnt/s0/spike_sorting/outputs")  # path containing the kilosort output unprocessed
-alf_path = ks_output_dir.joinpath(
-    'alf')  # this is the output standardized as per IBL standards (SI units, ALF convention)
+if __name__ == "__main__":
+    data_path = Path("/mnt/s0/spike_sorting/integration_tests")  # path on which the raw data will be downloaded
+    scratch_dir = Path.home().joinpath("scratch",
+                                    'iblsorter')  # temporary path on which intermediate raw data will be written, we highly recommend a SSD drive
+    ks_output_dir = Path("/mnt/s0/spike_sorting/outputs")  # path containing the kilosort output unprocessed
+    alf_path = ks_output_dir.joinpath(
+        'alf')  # this is the output standardized as per IBL standards (SI units, ALF convention)
 
-# download the integration test data from amazon s3 bucket
-bin_file, meta_file = download_test_data(data_path)
+    # download the integration test data from amazon s3 bucket
+    bin_file, meta_file = download_test_data(data_path)
 
-# prepare and mop up folder architecture for consecutive runs
-DELETE = True  # delete the intermediate run products, if False they'll be copied over to the output directory for debugging
-shutil.rmtree(scratch_dir, ignore_errors=True)
-scratch_dir.mkdir(exist_ok=True)
-ks_output_dir.mkdir(parents=True, exist_ok=True)
+    # prepare and mop up folder architecture for consecutive runs
+    DELETE = True  # delete the intermediate run products, if False they'll be copied over to the output directory for debugging
+    shutil.rmtree(scratch_dir, ignore_errors=True)
+    scratch_dir.mkdir(exist_ok=True)
+    ks_output_dir.mkdir(parents=True, exist_ok=True)
 
-# loads parameters and run
-params = ibl_pykilosort_params(bin_file)
-params['Th'] = [6, 3]
-run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
-                      ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
+    # loads parameters and run
+    params = ibl_pykilosort_params(bin_file)
+    params['Th'] = [6, 3]
+
+    if __name__ == "__main__":
+    run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
+                            ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
 ```
 
 
