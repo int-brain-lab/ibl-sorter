@@ -40,7 +40,6 @@ if __name__ == "__main__":
     params = ibl_pykilosort_params(bin_file)
     params['Th'] = [6, 3]
 
-    if __name__ == "__main__":
     run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
                             ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
 ```
