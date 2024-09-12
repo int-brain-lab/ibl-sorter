@@ -12,7 +12,7 @@ from ibllib.ephys import spikes
 from one.alf.files import get_session_path
 from one.remote import aws
 from iblsorter import add_default_handler, run, Bunch, __version__
-from iblsorter.params import KilosortParams
+from iblsorter.params import KilosortParams, MotionEstimationParams
 
 
 _logger = logging.getLogger(__name__)
@@ -63,7 +63,8 @@ def _sample2v(ap_file):
 
 
 def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
-                          ks_output_dir=None, alf_path=None, log_level='INFO', stop_after=None, params=None):
+                          ks_output_dir=None, alf_path=None, log_level='INFO', stop_after=None, 
+                          params=None, motion_params=None):
     """
     This runs the spike sorting and outputs the raw pykilosort without ALF conversion
     :param bin_file: binary file full path
@@ -89,15 +90,18 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
+    if motion_params is None:
+        motion_params = ibl_dredge_params(params)
     try:
         _logger.info(f"Starting Pykilosort version {__version__}")
         _logger.info(f"Scratch dir {scratch_dir}")
         _logger.info(f"Output dir {ks_output_dir}")
         _logger.info(f"Data dir {bin_file.parent}")
         _logger.info(f"Log file {log_file}")
-        _logger.info(f"Loaded probe geometry for NP{params['probe']['neuropixel_version']}")
+        _logger.info(f"Loaded probe geometry for NP{params.probe.neuropixel_version}")
 
-        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, stop_after=stop_after, **params)
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, 
+            stop_after=stop_after, motion_params=motion_params, **dict(params))
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
@@ -125,8 +129,17 @@ def ibl_pykilosort_params(bin_file):
     params.channel_detection_method = 'raw_correlations'
     params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
-    return dict(params)
+    return params
 
+def ibl_dredge_params(pyks_params):
+    # neuropixels 1/2 Dredge configs
+    motion_params = MotionEstimationParams(
+        bin_s=pyks_params.NT / pyks_params.fs,
+        gaussian_smoothing_sigma_s=pyks_params.NT / pyks_params.fs,
+        mincorr=0.5
+    )
+
+    return motion_params
 
 def probe_geometry(bin_file):
     """

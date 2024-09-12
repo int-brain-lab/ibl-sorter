@@ -1,3 +1,8 @@
+# 1.8
+### 1.8.0
+- Add the passingSpikes.table.pqt output
+- expose dredge and channel detection parameters
+
 # 1.7
 ### 1.7.3
 - Update installation instructions for using `cupy` alongside torch

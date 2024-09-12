@@ -280,7 +280,7 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
     for icc, t0 in enumerate(tqdm(t0s, desc="Auto-detection of noisy channels")):
         s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
         raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-        channel_labels[:, icc], _ = detect_bad_channels(raw, params.fs)
+        channel_labels[:, icc], _ = detect_bad_channels(raw, params.fs, **params.channel_detection_parameters.dict())
     channel_labels = scipy.stats.mode(channel_labels, axis=1)[0].squeeze()
     logger.info(f"Detected {np.sum(channel_labels == 1)} dead channels")
     logger.info(f"Detected {np.sum(channel_labels == 2)} noise channels")

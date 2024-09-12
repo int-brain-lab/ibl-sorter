@@ -28,6 +28,7 @@ def run(
     probe=None,
     stop_after=None,
     clear_context=False,
+    motion_params=None,
     **params,
 ):
     """Launch KiloSort 2.
@@ -45,6 +46,9 @@ def run(
     # Get params.
     params = KilosortParams(**params or {})
     assert params
+
+    # motion params
+    motion_params = motion_params or MotionEstimationParams()
 
     raw_data = RawDataLoader(dat_path, **params.ephys_reader_args)
 
@@ -74,9 +78,19 @@ def run(
 
     ctx = Context(ctx_path)
     ctx.params = params
+    ctx.motion_params = motion_params
     ctx.probe = probe
     ctx.raw_probe = copy_bunch(probe)
     ctx.raw_data = raw_data
+
+    if params.skip_preprocessing and not ctx.path("proc", ".dat").exists():
+        shutil.copy(dat_path, ctx.path("proc", ".dat"))
+        ns2add = np.ceil(raw_data.n_samples / params.NT) * params.NT - raw_data.n_samples
+        bytes2add = int(ns2add * params.n_channels * np.dtype(params.data_dtype).itemsize)
+        print(bytes2add)
+        with open(ctx.path("proc", ".dat"), "ab") as f:
+            f.write(b"\x00" * bytes2add)
+        logger.info("Skipping preprocessing, raw data copied to proc.dat")
 
     # Load the intermediate results to avoid recomputing things.
     ctx.load()
@@ -121,7 +135,7 @@ def run(
     # -------------------------------------------------------------------------
     # Preprocess data to create proc.dat
     ir.proc_path = ctx.path("proc", ".dat")
-    if "preprocess" not in ctx.timer.keys():
+    if "preprocess" not in ctx.timer.keys() and not params.skip_preprocessing:
         # Do not preprocess again if the proc.dat file already exists.
         with ctx.time("preprocess"):
             destriping(ctx)
@@ -131,7 +145,7 @@ def run(
     # Open the proc file.
     # NOTE: now we are always in Fortran order.
     assert ir.proc_path.exists()
-    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc)
+    ir.data_loader = DataLoader(ir.proc_path, params.NT, probe.Nchan, params.scaleproc, dtype=params.data_dtype)
 
     # -------------------------------------------------------------------------
     # # Time-reordering as a function of drift.

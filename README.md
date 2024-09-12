@@ -50,7 +50,8 @@ if __name__ == "__main__":
 ### System Requirements
 
 The code makes extensive use of the GPU via the CUDA framework. A high-end NVIDIA GPU with at least 8GB of memory is required.
-The solution has been deployed and tested on Cuda 12+.
+The solution has been deployed and tested on Cuda 12+ and Python 3.11.
+In June 2024, pyfftw was still not compatible with Python 3.12.
 
 ### Python environment
 
@@ -63,8 +64,16 @@ Navigate to the desired location for the repository and clone it
     git clone https://github.com/int-brain-lab/ibl-sorter.git
     cd ibl-sorter
 
+Installation for cuda 11.8
+
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    pip install cupy-cuda11x
+    pip install -e .
+
+Installation for cuda 12.1
+
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu12.1
     pip install cupy-cuda12x
-    pip3 install torch torchvision torchaudio
     pip install -e .
 
 ### Making sure the installation is successful and CUDA is available
@@ -74,4 +83,10 @@ Here we make sure that both `cupy` and `torch` are installed and that the CUDA f
 ```python
 from iblsorter.utils import cuda_installation_test
 cuda_installation_test()
+```
+
+Then we can run the integration test
+    
+```shell
+python ./examples/integration_100s.py /mnt/s1/spikesorting/integration_tests/stand-alone/
 ```
