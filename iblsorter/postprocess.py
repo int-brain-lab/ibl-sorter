@@ -1313,14 +1313,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
     st3 = st3[isort, :]
     # cProj = ir.cProj_c[cp.asnumpy(isort), :]
     # cProjPC = ir.cProjPC_c[cp.asnumpy(isort), :, :]
-
-    fs = os.listdir(output_dir)
-    for file in fs:
-        if file.endswith('.npy'):
-            os.remove(output_dir / file)
-    if (output_dir / '.phy').is_dir():
-        shutil.rmtree(output_dir / '.phy')
-
     spike_times = st3[:, 0].astype(np.uint64)
     spike_templates = st3[:, 1].astype(np.uint32)
 

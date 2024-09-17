@@ -6,12 +6,13 @@ import shutil
 
 import numpy as np
 
+from iblutil.util import setup_logger
 import spikeglx
 import neuropixel
 from ibllib.ephys import spikes
 from one.alf.files import get_session_path
 from one.remote import aws
-from iblsorter import add_default_handler, run, Bunch, __version__
+from iblsorter import run, Bunch, __version__
 from iblsorter.params import KilosortParams, MotionEstimationParams
 
 
@@ -76,6 +77,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     :param log_level: string, optional, defaults to 'INFO'
     :return:
     """
+    setup_logger(name='ibl', level=log_level)
     START_TIME = datetime.datetime.now()
     # handles all the paths infrastructure
     assert scratch_dir is not None
@@ -84,9 +86,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
     ks_output_dir.mkdir(exist_ok=True, parents=True)
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
-    add_default_handler(level=log_level)
-    add_default_handler(level=log_level, filename=log_file)
-    session_scratch_dir = scratch_dir.joinpath('.kilosort', bin_file.stem)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
@@ -106,9 +105,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.exception("Error in the main loop")
         raise e
     [_logger.removeHandler(h) for h in _logger.handlers]
-    # move the log file and all qcs to the output folder
-    shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_pykilosort.log'))
-
     # convert the pykilosort output to ALF IBL format
     if alf_path is not None:
         s2v = _sample2v(bin_file)
@@ -130,6 +126,7 @@ def ibl_pykilosort_params(bin_file):
     params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
     return params
+
 
 def ibl_dredge_params(pyks_params):
     # neuropixels 1/2 Dredge configs

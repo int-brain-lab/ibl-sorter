@@ -82,6 +82,7 @@ def run(
     ctx.probe = probe
     ctx.raw_probe = copy_bunch(probe)
     ctx.raw_data = raw_data
+    ctx.output_qc_path = output_dir
 
     if params.skip_preprocessing and not ctx.path("proc", ".dat").exists():
         shutil.copy(dat_path, ctx.path("proc", ".dat"))
@@ -125,7 +126,7 @@ def run(
         # of the data
         with ctx.time("whitening_matrix"):
             ir.Wrot = get_whitening_matrix(
-                raw_data=raw_data, probe=probe, params=params, qc_path=output_dir
+                raw_data=raw_data, probe=probe, params=params, qc_path=ctx.output_qc_path
             )
         # Cache the result.
         ctx.write(Wrot=ir.Wrot)

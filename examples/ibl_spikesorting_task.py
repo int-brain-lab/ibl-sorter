@@ -9,7 +9,7 @@ from iblutil.util import setup_logger
 path_integration = Path("/mnt/s1/spikesorting/integration_tests")
 path_probe = path_integration.joinpath("ibl", "probe01")
 testing_path = path_integration.joinpath("testing_output")
-logger = setup_logger(level="DEBUG")
+logger = setup_logger(level="INFO")
 
 
 if __name__ == "__main__":
