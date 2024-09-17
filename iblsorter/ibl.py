@@ -170,7 +170,7 @@ def probe_geometry(bin_file):
 
 
 def download_test_data(local_folder):
-    return aws.s3_download_folder('spikesorting/integration_tests', local_folder)
+    return aws.s3_download_folder('spikesorting/integration_tests/ibl', local_folder)
 
 
 def download_benchmark_data(local_folder):
