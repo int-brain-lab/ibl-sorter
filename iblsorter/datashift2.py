@@ -603,6 +603,7 @@ def datashift2(ctx, qc_path=None):
     probe = ctx.probe
     raw_data = ctx.raw_data
     ir = ctx.intermediate
+    Nbatch = ir.Nbatch
 
     spikes = dartsort_detector(ctx, probe, params)
 
@@ -640,14 +641,13 @@ def datashift2(ctx, qc_path=None):
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))
 
-    # DREDge motion correction batches depend on spike detections
-    # if there are no spikes in the last *data* batch(es)
-    # the number of MC batches will be < ir.Nbatch.
-    
-    n_motion_batches = dshift.shape[0]
+    # in the case of no spikes detected in last few batches                                                                                                                                                                                                       
+    # extend dshift by mirroring last shift                                                                                                                                                                                                                       
+    if dshift.shape[0] < Nbatch:
+        dshift = np.pad(dshift, [(0, Nbatch - dshift.shape[0]), (0, 0)], mode="edge")
 
     # register the data in-place batch by batch
-    for ibatch in tqdm(range(n_motion_batches), desc='Shifting Data'):
+    for ibatch in tqdm(range(Nbatch), desc='Shifting Data'):
 
         # load the batch from binary file
         dat = ir.data_loader.load_batch(ibatch, rescale=False)
@@ -658,6 +658,6 @@ def datashift2(ctx, qc_path=None):
         # write the aligned data back to the same file
         ir.data_loader.write_batch(ibatch, data_shifted)
 
-    logger.info(f"Shifted up/down {n_motion_batches} batches")
+    logger.info(f"Shifted up/down {Nbatch} batches")
 
     return Bunch(iorig=iorig, dshift=dshift, yblk=yblk)
