@@ -285,6 +285,9 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
     logger.info(f"Detected {np.sum(channel_labels == 1)} dead channels")
     logger.info(f"Detected {np.sum(channel_labels == 2)} noise channels")
     logger.info(f"Detected {np.sum(channel_labels == 3)} uppermost channels outside of the brain")
+    if np.mean(channel_labels == 0) < 0.5:
+        raise RuntimeError("More than half of channels are considered bad. Verify your raw data and eventually update"
+                           "the channel_detection_parameters.")
     if return_labels:
         return channel_labels == 0, channel_labels
     else:
