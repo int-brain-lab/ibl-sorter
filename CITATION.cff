@@ -10,14 +10,17 @@ authors:
   - family-names: Faulkner
     given-names: Mayo
     orcid:
+  - family-names: Langfield
+    given-names: Christopher
+    orcid:
   - family-names: Rossant
     given-names: Cyrille
     orcid:
   - family-names: Winter
     given-names: Olivier
     orcid:
-title: "pykilosort"
-version: 1.2.1
+title: "ibl-sorter"
+version: 1.8.0
 doi:
-date-released: 2021-11-29
-url: "https://github.com/int-brain-lab/pykilosort"
+date-released: 2024-05-15
+url: "https://github.com/int-brain-lab/ibl-sorter"
