@@ -3,6 +3,10 @@
 - Add the passingSpikes.table.pqt output
 - expose dredge and channel detection parameters
 
+### 1.8.1
+- raise Runtime error if more than half of the channels are detected as bad
+- datashift patch when the number of spikes is insufficient to register the electrode signal
+
 # 1.7
 ### 1.7.3
 - Update installation instructions for using `cupy` alongside torch

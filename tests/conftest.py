@@ -6,10 +6,6 @@ import numpy as np
 
 from iblsorter.utils import Bunch, read_data
 
-from iblsorter import add_default_handler
-add_default_handler(level='DEBUG')
-
-
 from math import ceil
 from pathlib import Path
 from pytest import fixture

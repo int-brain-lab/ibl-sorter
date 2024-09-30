@@ -105,20 +105,20 @@ class MotionEstimationParams(BaseModel):
     count_bin_min: int = Field(2)
 
 
-class ChannelDetectionParamsRawCorrelations(BaseModel):
+class ChannelDetectionParams(BaseModel):
     psd_hf_threshold: float = Field(.02, description="Threshold power spectral density above which the PSD at 0.8 Nyquist is considered noisy (units: uV ** 2 / Hz ")
     similarity_threshold: Optional[Tuple[float]] = Field((-.5, 1), description="similarity threshold for channel detection")
 
 
 class KilosortParams(BaseModel):
-    AUCsplit: float = Field(0.9,description="""splitting a cluster at the end requires at least this much isolation for each sub-cluster (max=1)""")
+    AUCsplit: float = Field(0.9, description="""splitting a cluster at the end requires at least this much isolation for each sub-cluster (max=1)""")
     Nfilt: Optional[int] = None  # This should be a computed property once we add the probe to the config
-    Th: List[float] = Field([6, 3],description="""threshold on projections (like in Kilosort1, can be different for last pass like [10 4])""",)
-    ThPre: float = Field(8,description="threshold crossings for pre-clustering (in PCA projection space)",)
+    Th: List[float] = Field([6, 3], description="""threshold on projections (like in Kilosort1, can be different for last pass like [10 4])""",)
+    ThPre: float = Field(8, description="threshold crossings for pre-clustering (in PCA projection space)",)
     channel_detection_method: Literal['kilosort', 'raw_correlations'] = Field(
         'kilosort', description='Method to detect faulty channels, kilosort uses firing rate, raw_correlations uses PSD and similarity')
-    channel_detection_parameters: Optional[ChannelDetectionParamsRawCorrelations] = Field(
-        ChannelDetectionParamsRawCorrelations(), description='parameters for raw correlation channel detection option')
+    channel_detection_parameters: Optional[ChannelDetectionParams] = Field(
+        ChannelDetectionParams(), description='parameters for raw correlation channel detection option')
     data_dtype: str = Field('int16', description='data type of raw data')
     datashift: Optional[DatashiftParams] = Field(None, description="parameters for 'datashift' drift correction. not required")
     deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")

@@ -285,6 +285,9 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
     logger.info(f"Detected {np.sum(channel_labels == 1)} dead channels")
     logger.info(f"Detected {np.sum(channel_labels == 2)} noise channels")
     logger.info(f"Detected {np.sum(channel_labels == 3)} uppermost channels outside of the brain")
+    if np.mean(channel_labels == 0) < 0.5:
+        raise RuntimeError("More than half of channels are considered bad. Verify your raw data and eventually update"
+                           "the channel_detection_parameters.")
     if return_labels:
         return channel_labels == 0, channel_labels
     else:
@@ -399,8 +402,9 @@ def destriping(ctx):
     # get the bad channels
     # detect_bad_channels_cbin
     kwargs = dict(output_file=ir.proc_path, wrot=wrot, nc_out=probe.Nchan, h=probe.h,
-                  butter_kwargs={'N': 3, 'Wn': ctx.params.fshigh / ctx.params.fs * 2, 'btype': 'highpass'})
-
+                  butter_kwargs={'N': 3, 'Wn': ctx.params.fshigh / ctx.params.fs * 2, 'btype': 'highpass'},
+                  output_qc_path=ctx.output_qc_path)
+    # _iblqc_ephysSaturation.samples.npy
     logger.info("Pre-processing: applying destriping option to the raw data")
     # there are inconsistencies between the mtscomp reader and the flat binary file reader
     # the flat bin reader as an attribute _paths that allows looping on each chunk
@@ -420,9 +424,9 @@ def destriping(ctx):
                 ns2add = ceil(ns / ctx.params.NT) * ctx.params.NT - ns
             else:
                 ns2add = 0
-            decompress_destripe_cbin(bin_file, append=i > 0, ns2add=ns2add, output_qc_path=bin_file.parent, **kwargs)
+            decompress_destripe_cbin(bin_file, append=i > 0, ns2add=ns2add, **kwargs)
     else:  # in the case of cbin IBL files
         assert raw_data.raw_data.n_parts == 1
         bin_file = Path(raw_data.raw_data.name)
         ns2add = ceil(raw_data.n_samples / ctx.params.NT) * ctx.params.NT - raw_data.n_samples
-        decompress_destripe_cbin(bin_file, ns2add=ns2add, output_qc_path=bin_file.parent, **kwargs)
+        decompress_destripe_cbin(bin_file, ns2add=ns2add, **kwargs)

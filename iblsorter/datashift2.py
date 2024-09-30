@@ -641,6 +641,11 @@ def datashift2(ctx, qc_path=None):
     # sort in case we still want to do "tracking"
     iorig = np.argsort(np.mean(dshift, axis=1))
 
+    # in the case of no spikes detected in last few batches                                                                                                                                                                                                       
+    # extend dshift by mirroring last shift                                                                                                                                                                                                                       
+    if dshift.shape[0] < Nbatch:
+        dshift = np.pad(dshift, [(0, Nbatch - dshift.shape[0]), (0, 0)], mode="edge")
+
     # register the data in-place batch by batch
     for ibatch in tqdm(range(Nbatch), desc='Shifting Data'):
 
