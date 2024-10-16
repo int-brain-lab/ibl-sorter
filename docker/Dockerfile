@@ -24,16 +24,15 @@ RUN pip install cupy-cuda12x
 RUN pip install -r ibl-sorter/requirements.txt
 RUN pip install -r dartsort/requirements-full.txt
 RUN pip install -r dredge/requirements.txt
-RUN pip uninstall -y ibllib
-RUN pip install -e ./ibllib
 RUN pip install -e ./ibl-sorter
 RUN pip install -e ./dartsort
 RUN pip install -e ./dredge
 RUN pip install h5py
 RUN pip install hdbscan
 RUN pip install ipython
+RUN pip uninstall -y ibllib
+RUN pip install -e ./ibllib
 
-# todo we shouldn't need this file, just feeding the cache dir argunent to the task should be enough
 COPY iblscripts_sort_recording.sh /root/Documents/PYTHON/iblscripts/deploy/serverpc/iblsorter/sort_recording.sh
 RUN git -C ./ibl-sorter pull
 ENTRYPOINT ["top", "-b"]

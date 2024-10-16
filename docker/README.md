@@ -2,9 +2,10 @@
 
 ## Usage
  
-The command to run a PID is the following
+The command to run a PID is the following:
  ```shell
-sudo docker compose run spikesorter 5d570bf6-a4c6-4bf1-a14b-2c878c84ef0e
+tmux
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/docker/run_pid.py 39e6c9a9-2241-4781-9ed6-db45979207e7
  ```
 
 ## Installation of the container
@@ -18,21 +19,21 @@ Pre-requisites:
 sudo ./setup_nvidia_container_toolkit.sh
 ```
 
-### Building the container
+### Building the image, and creating the container
 
 From the `./docker` folder, run the following command. This will take 5 to 10 mins
 ```shell
 sudo docker buildx build . --platform linux/amd64 --tag int-brain-lab/iblsorter:latest
 ```
-
-Make sure the container runs in the background 
+Once the image is built, create and run the container in the background
 ```shell
-sudo docker compose up -d
+sudo docker compose up -d 
 ```
 
-You can then connect to it by running a terminal:
-ps
-`sudo docker compose exec spikesorter /bin/bash`
+And this is the command to access a shell in the container:
+```shell
+sudo docker compose exec spikesorter /bin/bash
+``` 
 
 
 ## Installing from a blank EC2
@@ -60,10 +61,7 @@ cd ibl-sorter/docker
 sudo ./setup_nvidia_container_toolkit.sh
 ```
 
-3. Build the container referring to the instructions above 
-
-
-4. Format and mount the attached volume, here you want to check that the volume is indeed `/dev/xvdb` using `df -h` (few secs):
+3. Format and mount the attached volume, here you want to check that the volume is indeed `/dev/xvdb` using `df -h` (few secs):
 ```shell
 sudo mkfs -t xfs /dev/xvdb
 sudo mkdir -p /mnt/s0
@@ -72,11 +70,13 @@ sudo chown ubuntu:ubuntu -fR /mnt/s0
 df -h
 ```
 
+4. Build the docker image referring to the instructions above and start the container
+
 5. Setup ONE from inside the container, make sure the cache directory is `/mnt/s0/spikesorting`, configure the base URL according to your needs,
 for internal re-runs it should be set to https://alyx.internationalbrainlab.org
-
+Here is the command to enter the container shell: 
 ```shell
-
+sudo docker compose exec spikesorter /bin/bash
 ```
 
-4. If you want to send the data to flatiron you'll have to setup the `~/.ssh/config` file so as to reflect the `sdsc` SSH configuration.
+6. If you want to send the data to flatiron you'll have to setup the `~/.ssh/config` file so as to reflect the `sdsc` SSH configuration.

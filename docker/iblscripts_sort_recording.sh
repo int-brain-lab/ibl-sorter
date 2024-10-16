@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-SCRATCH_DRIVE=/mnt/h0  # this is the path of the scratch SSD volume for intermediate KS2 results swapping
+SCRATCH_DRIVE=/mnt/s0  # this is the path of the scratch SSD volume for intermediate KS2 results swapping
 # --------------- DO NOT EDIT BELOW
 
 source ~/Documents/PYTHON/SPIKE_SORTING/iblsort/.venv/bin/activate
