@@ -1,7 +1,7 @@
 services:
   spikesorter:
-    image: int-brain-lab/ibl-sorter:latest
-    entrypoint: python /root/Documents/PYTHON/pykilosort/docker/run_pid.py
+    image: int-brain-lab/iblsorter:latest
+    entrypoint: python /root/Documents/PYTHON/ibl-sorter/docker/run_pid.py
     deploy:
       resources:
         reservations:
