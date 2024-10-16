@@ -1,6 +1,6 @@
 services:
   spikesorter:
-    image: int-brain-lab/pykilosort:latest
+    image: int-brain-lab/ibl-sorter:latest
     entrypoint: python /root/Documents/PYTHON/pykilosort/docker/run_pid.py
     deploy:
       resources:
@@ -11,6 +11,4 @@ services:
               capabilities: [gpu]
     volumes:
       - /mnt/s0:/mnt/s0
-      - /mnt/s1:/mnt/s1
-      - /home/$USER/scratch:/scratch
       - /home/$USER/.one:/root/.one
