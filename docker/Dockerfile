@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /root/Documents/PYTHON
 WORKDIR /root/Documents/PYTHON
-
-RUN git clone -b ibl_prod_dev https://github.com/int-brain-lab/pykilosort.git
-RUN git clone -b spikesorting_rerun https://github.com/int-brain-lab/ibllib.git
+# todo change iblsort branch to main for ibllib once released
+RUN git clone -b aws https://github.com/int-brain-lab/pykilosort.git
+RUN git clone -b iblsort https://github.com/int-brain-lab/ibllib.git
 RUN git clone https://github.com/int-brain-lab/iblscripts.git
 RUN git clone https://github.com/cwindolf/dartsort.git
 RUN git clone https://github.com/evarol/dredge.git
