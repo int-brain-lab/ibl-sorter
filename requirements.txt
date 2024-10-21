@@ -1,5 +1,5 @@
 click
-dartsort @ git+https://github.com/cwindolf/dartsort@main
+dartsort @ git+https://github.com/cwindolf/dartsort@fe461d11a37f0b99a1e940f0893be3aca0490853
 dredge @ git+https://github.com/evarol/dredge@main
 hdbscan
 h5py

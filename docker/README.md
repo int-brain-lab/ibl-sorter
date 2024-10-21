@@ -32,6 +32,7 @@ sudo docker compose up -d
 
 And this is the command to access a shell in the container:
 ```shell
+cd Documents/PYTHON/ibl-sorter/docker/
 sudo docker compose exec spikesorter /bin/bash
 ``` 
 
