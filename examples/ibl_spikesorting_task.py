@@ -2,14 +2,15 @@
 This is an integration test on the IBL task
 """
 from pathlib import Path
+import logging
 import shutil
 from ibllib.pipes.ephys_tasks import SpikeSorting
-from iblutil.util import setup_logger
 
 path_integration = Path("/mnt/s1/spikesorting/integration_tests")
 path_probe = path_integration.joinpath("ibl", "probe01")
 testing_path = path_integration.joinpath("testing_output")
-logger = setup_logger(level="DEBUG")
+shutil.rmtree(testing_path, ignore_errors=True)
+logger = logging.getLogger('ibl')
 
 
 if __name__ == "__main__":
@@ -25,3 +26,4 @@ if __name__ == "__main__":
     ssjob.run()
     assert ssjob.status == 0
     ssjob.assert_expected_outputs()
+    logger.info("Test is complete and outputs validated - exiting now")

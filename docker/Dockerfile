@@ -13,26 +13,26 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /root/Documents/PYTHON
 WORKDIR /root/Documents/PYTHON
-
-RUN git clone -b ibl_prod_dev https://github.com/int-brain-lab/pykilosort.git
-RUN git clone -b spikesorting_rerun https://github.com/int-brain-lab/ibllib.git
+# todo change iblsort branch to main for ibllib once released
+RUN git clone -b aws https://github.com/int-brain-lab/ibl-sorter.git
+RUN git clone -b iblsort https://github.com/int-brain-lab/ibllib.git
 RUN git clone https://github.com/int-brain-lab/iblscripts.git
 RUN git clone https://github.com/cwindolf/dartsort.git
 RUN git clone https://github.com/evarol/dredge.git
 
 RUN pip install cupy-cuda12x
-RUN pip install -r pykilosort/requirements.txt
+RUN pip install -r ibl-sorter/requirements.txt
 RUN pip install -r dartsort/requirements-full.txt
 RUN pip install -r dredge/requirements.txt
-RUN pip uninstall -y ibllib
-RUN pip install -e ./ibllib
-RUN pip install -e ./pykilosort
+RUN pip install -e ./ibl-sorter
 RUN pip install -e ./dartsort
 RUN pip install -e ./dredge
 RUN pip install h5py
 RUN pip install hdbscan
 RUN pip install ipython
+RUN pip uninstall -y ibllib
+RUN pip install -e ./ibllib
 
-COPY run_pykilosort.sh /root/Documents/PYTHON/iblscripts/deploy/serverpc/kilosort2/run_pykilosort.sh
-RUN git -C ./pykilosort pull
+COPY iblscripts_sort_recording.sh /root/Documents/PYTHON/iblscripts/deploy/serverpc/iblsorter/sort_recording.sh
+RUN git -C ./ibl-sorter pull
 ENTRYPOINT ["top", "-b"]

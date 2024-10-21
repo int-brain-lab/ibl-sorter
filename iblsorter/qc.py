@@ -15,7 +15,7 @@ def plot_covariance_matrix(covariance_matrix, out_path):
     ax.set(title="Data covariance matrix", ylabel='Channel', xlabel='Channel')
     plt.imshow(20 * np.log10(np.abs(covariance_matrix)), vmin=0, vmax=60), plt.colorbar()
     if out_path is not None:
-        fig.savefig(Path(out_path).joinpath('_iblqc_.covariance_matrix.png'))
+        fig.savefig(Path(out_path).joinpath('_iblqc_covariance_matrix.png'))
         plt.close(fig)
     else:
         return fig, ax
@@ -34,7 +34,7 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
     ax.set(title="DREDge drift estimate", ylim=[depth_bin_edges.min(), depth_bin_edges.max()])
     fig.tight_layout()
     if out_path is not None:
-        fig.savefig(out_path.joinpath("_iblqc_.drift_estimate.png"))
+        fig.savefig(out_path.joinpath("_iblqc_drift_estimate.png"))
 
     fig, ax = plt.subplots(figsize=(15, 8))
     im = mu.show_registered_raster(motion_est, spikes.amps, spikes.depths, spikes.times, ax, vmax=15, aspect="auto")
@@ -42,7 +42,7 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
     ax.set(title="DREDge registered raster", ylim=[depth_bin_edges.min(), depth_bin_edges.max()])
     fig.tight_layout()
     if out_path is not None:
-        fig.savefig(out_path.joinpath("_iblqc_.drift_registered.png"))
+        fig.savefig(out_path.joinpath("_iblqc_drift_registered.png"))
 
 
 def plot_whitening_matrix(wrot, whitening_range=32, out_path=None, good_channels=None):
@@ -65,7 +65,7 @@ def plot_whitening_matrix(wrot, whitening_range=32, out_path=None, good_channels
     ax.set(title=f"Whitening matrix diagonals, conditioning {cond}", ylabel='Channel', xlabel='Channel')
     plt.imshow(qc_diag, vmin=-.1, vmax=.1, cmap='PuOr'), plt.colorbar(location='bottom')
     if out_path is not None:
-        fig.savefig(Path(out_path).joinpath('_iblqc_.whitening_matrix.png'))
+        fig.savefig(Path(out_path).joinpath('_iblqc_whitening_matrix.png'))
         plt.close(fig)
     else:
         return fig, ax

@@ -83,10 +83,9 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     scratch_dir.mkdir(exist_ok=True, parents=True)
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
     ks_output_dir.mkdir(exist_ok=True, parents=True)
-    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat()}_kilosort.log")
+    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_kilosort.log")
     add_default_handler(level=log_level)
     add_default_handler(level=log_level, filename=log_file)
-    session_scratch_dir = scratch_dir.joinpath('.kilosort', bin_file.stem)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
@@ -100,14 +99,14 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Log file {log_file}")
         _logger.info(f"Loaded probe geometry for NP{params.probe.neuropixel_version}")
 
-        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir, 
+        run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir,
             stop_after=stop_after, motion_params=motion_params, **dict(params))
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
     [_logger.removeHandler(h) for h in _logger.handlers]
     # move the log file and all qcs to the output folder
-    shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_pykilosort.log'))
+    shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_iblsorter.log'))
 
     # convert the pykilosort output to ALF IBL format
     if alf_path is not None:

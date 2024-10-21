@@ -34,3 +34,6 @@ systemctl restart docker
 # make sure the installation was successful
  docker run hello-world
  docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+
+# create the cache directory to export to the docker container
+mkir /home/ubuntu/.one
