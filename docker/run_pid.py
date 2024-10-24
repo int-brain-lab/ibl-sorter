@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("pid")
     args = parser.parse_args()
     pid = args.pid
-    one = ONE()  # cache_dir = "/mnt/s1/spikesorting/raw_data" or "/mnt/s0/spikesorting"
+    one = ONE()
     ssl = SpikeSortingLoader(one=one, pid=pid)
     sr = ssl.raw_electrophysiology(band="ap", stream=False)
     ssl.samples2times(0)
@@ -30,14 +30,14 @@ if __name__ == "__main__":
     ssjob.run()
     if ssjob.status == 0:
         sr.file_bin.unlink()
-        ss_path = ssl.session_path.joinpath('alf', ssl.pname, 'pykilosort')
+        ss_path = ssl.session_path.joinpath('alf', ssl.pname, 'iblsorter')
         target_dir_sdsc = Path("/mnt/ibl/quarantine/tasks_external/SpikeSorting")
         command = f"rsync -av --progress --relative {one.cache_dir}/./{ss_path.relative_to(one.cache_dir)}/ sdsc:{target_dir_sdsc}/"
         with open(one.cache_dir.joinpath(f'rsync_{pid}.txt'), 'w+') as fid:
             fid.write(f"{command}\n")
-            fid.write(f"#rm -fR {ssl.session_path.joinpath('spike_sorters', 'pykilosort', ssl.pname)}\n")
+            fid.write(f"#rm -fR {ssl.session_path.joinpath('spike_sorters', 'iblsorter', ssl.pname)}\n")
             fid.write(f"#rm -fR {ss_path}\n")
     else:
-        ss_path = ssl.session_path.joinpath('alf', ssl.pname, 'pykilosort')
+        ss_path = ssl.session_path.joinpath('alf', ssl.pname, 'iblsorter')
         with open(one.cache_dir.joinpath(f'error_{pid}.txt'), 'w+') as fid:
             fid.write(f"{ss_path}\n")

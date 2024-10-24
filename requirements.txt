@@ -1,5 +1,5 @@
 click
-dartsort @ git+https://github.com/cwindolf/dartsort@main
+dartsort @ git+https://github.com/cwindolf/dartsort@0.1.1
 dredge @ git+https://github.com/evarol/dredge@main
 hdbscan
 h5py
@@ -7,7 +7,7 @@ matplotlib
 mock
 numba
 numpy
-ibllib @ git+https://github.com/int-brain-lab/ibllib@develop
+ibllib @ git+https://github.com/int-brain-lab/ibllib@iblsort
 ibl-neuropixel >= 1.0.1
 ipython
 phylib >= 2.5.0
