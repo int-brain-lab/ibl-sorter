@@ -77,7 +77,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     :param log_level: string, optional, defaults to 'INFO'
     :return:
     """
-    setup_logger(name='ibl', level=log_level)
     START_TIME = datetime.datetime.now()
     # handles all the paths infrastructure
     assert scratch_dir is not None
@@ -86,8 +85,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
     ks_output_dir.mkdir(exist_ok=True, parents=True)
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_kilosort.log")
-    add_default_handler(level=log_level)
-    add_default_handler(level=log_level, filename=log_file)
+    setup_logger(name='', level=log_level, file=log_file)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
@@ -106,10 +104,13 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     except Exception as e:
         _logger.exception("Error in the main loop")
         raise e
-    [_logger.removeHandler(h) for h in _logger.handlers]
+    # removes the file handler of the logger
+    root_logger = logging.getLogger()
+    for h in root_logger.handlers:
+        if isinstance(h, logging.FileHandler) and Path(h.baseFilename) == log_file:
+            root_logger.removeHandler(h)
     # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_iblsorter.log'))
-
     # convert the pykilosort output to ALF IBL format
     if alf_path is not None:
         s2v = _sample2v(bin_file)

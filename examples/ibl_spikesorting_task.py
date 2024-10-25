@@ -5,17 +5,22 @@ from pathlib import Path
 import logging
 import shutil
 from ibllib.pipes.ephys_tasks import SpikeSorting
-from iblutil.util import setup_logger
+from iblsorter.ibl import download_test_data
 
-path_integration = Path("/mnt/s1/spikesorting/integration_tests")
-download_test_data(path_integration.joinpath('ibl'))
+SCRATCH_FOLDER = Path('/home/olivier/scratch')
+PATH_INTEGRATION = Path("/mnt/s1/spikesorting/integration_tests")
 
-path_probe = path_integration.joinpath("ibl", "probe01")
-testing_path = path_integration.joinpath("testing_output")
-shutil.rmtree(testing_path, ignore_errors=True)
-logger = logging.getLogger('ibl')
 
 if __name__ == "__main__":
+
+    import datetime
+    PATH_INTEGRATION.joinpath(f"{datetime.datetime.now().isoformat().replace(':', '')}.temp").touch()
+
+    download_test_data(PATH_INTEGRATION.joinpath('ibl'))
+    logger = logging.getLogger('iblsorter')
+    path_probe = PATH_INTEGRATION.joinpath("ibl", "probe01")
+    testing_path = PATH_INTEGRATION.joinpath("testing_output")
+    shutil.rmtree(testing_path, ignore_errors=True)
     pname = path_probe.parts[-1]
     session_path = testing_path.joinpath('iblsort', 'Subjects', 'iblsort_subject', '2024-07-16', '001')
     raw_ephys_data_path = session_path.joinpath('raw_ephys_data', pname)
@@ -24,7 +29,7 @@ if __name__ == "__main__":
     raw_ephys_data_path.mkdir(parents=True, exist_ok=True)
     shutil.copytree(path_probe, raw_ephys_data_path, dirs_exist_ok=True)
     logger.info(f"iblsort run for probe {pname} in session {session_path}")
-    ssjob = SpikeSorting(session_path, one=None, pname=pname, device_collection='raw_ephys_data', location="local")
+    ssjob = SpikeSorting(session_path, one=None, pname=pname, device_collection='raw_ephys_data', location="local", scratch_folder=SCRATCH_FOLDER)
     ssjob.run()
     assert ssjob.status == 0
     ssjob.assert_expected_outputs()

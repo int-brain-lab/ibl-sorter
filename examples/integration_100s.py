@@ -1,7 +1,5 @@
-import argparse
 import shutil
 from pathlib import Path
-import sys
 
 import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
