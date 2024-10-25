@@ -60,6 +60,7 @@ class DatashiftParams(BaseModel):
             )
         return v
 
+
 class MotionEstimationParams(BaseModel):
     """
     See https://github.com/evarol/dredge/blob/main/python/dredge/dredge_ap.py
@@ -115,8 +116,6 @@ class KilosortParams(BaseModel):
     Nfilt: Optional[int] = None  # This should be a computed property once we add the probe to the config
     Th: List[float] = Field([6, 3], description="""threshold on projections (like in Kilosort1, can be different for last pass like [10 4])""",)
     ThPre: float = Field(8, description="threshold crossings for pre-clustering (in PCA projection space)",)
-    channel_detection_method: Literal['kilosort', 'raw_correlations'] = Field(
-        'kilosort', description='Method to detect faulty channels, kilosort uses firing rate, raw_correlations uses PSD and similarity')
     channel_detection_parameters: Optional[ChannelDetectionParams] = Field(
         ChannelDetectionParams(), description='parameters for raw correlation channel detection option')
     data_dtype: str = Field('int16', description='data type of raw data')

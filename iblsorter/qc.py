@@ -35,6 +35,7 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
     fig.tight_layout()
     if out_path is not None:
         fig.savefig(out_path.joinpath("_iblqc_drift_estimate.png"))
+        plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(15, 8))
     im = mu.show_registered_raster(motion_est, spikes.amps, spikes.depths, spikes.times, ax, vmax=15, aspect="auto")
@@ -43,6 +44,7 @@ def plot_motion_correction(motion_est, spikes, out_path=None):
     fig.tight_layout()
     if out_path is not None:
         fig.savefig(out_path.joinpath("_iblqc_drift_registered.png"))
+        plt.close(fig)
 
 
 def plot_whitening_matrix(wrot, whitening_range=32, out_path=None, good_channels=None):

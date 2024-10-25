@@ -128,7 +128,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
 
 def ibl_pykilosort_params(bin_file):
     params = KilosortParams()
-    params.channel_detection_method = 'raw_correlations'
     params.overlap_samples = 1024  # this needs to be a multiple of 1024
     params.probe = probe_geometry(bin_file)
     return params
@@ -149,10 +148,7 @@ def probe_geometry(bin_file):
     Loads the geometry from the meta-data file of the spikeglx acquisition system
     sr: ibllib.io.spikeglx.Reader or integer with neuropixel version 1 or 2
     """
-    if isinstance(bin_file, list):
-        sr = spikeglx.Reader(bin_file[0])
-        h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
-    elif isinstance(bin_file, str) or isinstance(bin_file, Path):
+    if isinstance(bin_file, str) or isinstance(bin_file, Path):
         sr = spikeglx.Reader(bin_file)
         h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     else:

@@ -1,3 +1,10 @@
+# 2.0
+### 2.0.0
+- drop support for file list. This would have to be implemented outside with a reader object
+- order by Neuropixel channels byshank / row / col: swapped the readers for spikeglx.Readers 
+- removed support for original channel detection
+- output channel detection QC figure with thresholds 
+
 # 1.8
 ### 1.8.0
 - Add the passingSpikes.table.pqt output

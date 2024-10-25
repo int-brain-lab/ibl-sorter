@@ -7,10 +7,12 @@ from scipy.signal import butter
 import scipy.stats
 import cupy as cp
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 import iblsorter.qc
 from .cptools import lfilter, median
 from ibldsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
+import ibldsp.plots
 
 logger = logging.getLogger(__name__)
 
@@ -187,8 +189,8 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None):
     # on the second pass, apply destriping to the data
     for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
         s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
-        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-        datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels) / probe['sample2volt']
+        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32)
+        datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels)  / probe['sample2volt']
         assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
         # attempt at fancy regularization, but this was very slow
         # from joblib import Parallel, delayed, cpu_count
@@ -252,20 +254,7 @@ def get_whitening_matrix(raw_data=None, probe=None, params=None, qc_path=None):
     return Wrot
 
 
-def get_good_channels(raw_data, params, probe, **kwargs):
-    """
-    Wrapper for two choices of channel detection: 'raw_correlations' and
-    'kilosort'. Passes kwargs through to 
-    individual methods.
-    """
-    method = params.channel_detection_method
-    if method == "raw_correlations":
-        return get_good_channels_raw_correlations(raw_data, params, probe, **kwargs)
-    else:
-        return get_good_channels_kilosort(raw_data, params, probe, **kwargs)
-
-
-def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return_labels=False):
+def get_good_channels(raw_data, params, probe, t0s=None, return_labels=False, qc_path=None):
     """
     Detect bad channels using the method described in IBL whitepaper
     :param raw_data:
@@ -279,111 +268,25 @@ def get_good_channels_raw_correlations(raw_data, params, probe, t0s=None, return
     channel_labels = np.zeros((probe.Nchan, t0s.size))
     for icc, t0 in enumerate(tqdm(t0s, desc="Auto-detection of noisy channels")):
         s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
-        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32) * probe['sample2volt']
-        channel_labels[:, icc], _ = detect_bad_channels(raw, params.fs, **params.channel_detection_parameters.dict())
+        raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32)
+        channel_labels[:, icc], xfeats = detect_bad_channels(raw, params.fs, **params.channel_detection_parameters.dict())
     channel_labels = scipy.stats.mode(channel_labels, axis=1)[0].squeeze()
     logger.info(f"Detected {np.sum(channel_labels == 1)} dead channels")
     logger.info(f"Detected {np.sum(channel_labels == 2)} noise channels")
     logger.info(f"Detected {np.sum(channel_labels == 3)} uppermost channels outside of the brain")
+    if qc_path is not None:
+        fig, ax = ibldsp.plots.show_channels_labels(raw, params.fs, channel_labels, xfeats, **params.channel_detection_parameters.dict())
+        fig.savefig(Path(qc_path).joinpath('_iblqc_channel_detection.png'))
+        plt.close(fig)
     if np.mean(channel_labels == 0) < 0.5:
-        raise RuntimeError("More than half of channels are considered bad. Verify your raw data and eventually update"
-                           "the channel_detection_parameters.")
+        raise RuntimeError(f"More than half of channels are considered bad. Verify your raw data and eventually update"
+                           f"the channel_detection_parameters. \n"
+                           f"Check {Path(qc_path).joinpath('_iblqc_covariance_matrix.png')}"
+                           f" and your data using `ibldsp.voltage.detect_bad_channels`")
     if return_labels:
         return channel_labels == 0, channel_labels
     else:
         return channel_labels == 0
-
-
-def get_good_channels_kilosort(raw_data, params, probe, return_labels=False):
-    """
-    Of the channels indicated by the user as good (chanMap), 
-    further subset those that have a mean firing rate above a certain value
-    (default is ops.minfr_goodchannels = 0.1Hz)
-    Needs the same filtering parameters in ops as usual
-    also needs to know where to start processing batches (twind)
-    and how many channels there are in total (NchanTOT).
-    
-    :param raw_data: Raw data loader from the main PyKS loop.
-    :param params: Params object for this PyKS run.
-    :param probe: Probe identified for this recording.
-    :param return_labels: Whether to return channel labels 
-        (0 for good, 1 for dead, etc.)
-    """
-    fs = params.fs
-    fshigh = params.fshigh
-    fslow = params.fslow
-    Nbatch = get_Nbatch(raw_data, params)
-    NT = params.NT
-    spkTh = params.spkTh
-    nt0 = params.nt0
-    minfr_goodchannels = params.minfr_goodchannels
-
-    chanMap = probe.chanMap
-    NchanTOT = len(chanMap)
-
-    ich = []
-    k = 0
-    ttime = 0
-
-    # skip every 100 batches
-    # TODO: move_to_config - every N batches
-    for ibatch in tqdm(range(0, Nbatch, int(ceil(Nbatch / 100))), desc="Finding good channels"):
-        i = NT * ibatch
-        buff = raw_data[i:i + NT]
-        # buff = _make_fortran(buff)
-        # NOTE: using C order now
-        assert buff.shape[0] > buff.shape[1]
-        assert buff.flags.c_contiguous
-        if buff.size == 0:
-            break
-
-        # Put on GPU.
-        buff = cp.asarray(buff, dtype=np.float32)
-        assert buff.flags.c_contiguous
-        datr = gpufilter(buff, chanMap=chanMap, fs=fs, fshigh=fshigh, fslow=fslow)
-        assert datr.shape[0] > datr.shape[1]
-
-        # very basic threshold crossings calculation
-        s = cp.std(datr, axis=0)
-        datr = datr / s  # standardize each channel ( but don't whiten)
-        # TODO: move_to_config (30 sample range)
-        mdat = my_min(datr, 30, 0)  # get local minima as min value in +/- 30-sample range
-
-        # take local minima that cross the negative threshold
-        xi, xj = cp.nonzero((datr < mdat + 1e-3) & (datr < spkTh))
-
-        # filtering may create transients at beginning or end. Remove those.
-        xj = xj[(xi >= nt0) & (xi <= NT - nt0)]
-
-        # collect the channel identities for the detected spikes
-        ich.append(xj)
-        k += xj.size
-
-        # keep track of total time where we took spikes from
-        ttime += datr.shape[0] / fs
-
-    ich = cp.concatenate(ich)
-
-    # count how many spikes each channel got
-    nc, _ = cp.histogram(ich, cp.arange(NchanTOT + 1))
-
-    # divide by total time to get firing rate
-    nc = nc / ttime
-
-    # keep only those channels above the preset mean firing rate
-    igood = cp.asnumpy(nc >= minfr_goodchannels)
-
-    if np.sum(igood) == 0:
-        raise RuntimeError("No good channels found! Verify your raw data and parameters.")
-
-    logger.info('Found %d threshold crossings in %2.2f seconds of data.' % (k, ttime))
-    logger.info('Found %d/%d bad channels.' % (np.sum(~igood), len(igood)))
-
-    if return_labels:
-        labels = (~igood).astype(int) # mark channels as dead (code 1)
-        return igood, labels
-    else:
-        return igood
 
 
 def get_Nbatch(raw_data, params):
@@ -406,27 +309,5 @@ def destriping(ctx):
                   output_qc_path=ctx.output_qc_path)
     # _iblqc_ephysSaturation.samples.npy
     logger.info("Pre-processing: applying destriping option to the raw data")
-    # there are inconsistencies between the mtscomp reader and the flat binary file reader
-    # the flat bin reader as an attribute _paths that allows looping on each chunk
-    if isinstance(raw_data.raw_data, list):
-        for i, rd in enumerate(raw_data.raw_data):
-            if i == (len(raw_data.raw_data) - 1):
-                ns2add = ceil(raw_data.n_samples[-1] / ctx.params.NT) * ctx.params.NT - raw_data.n_samples[-1]
-            else:
-                ns2add = 0
-            decompress_destripe_cbin(rd.name, ns2add=ns2add, append=i > 0, **kwargs)
-    elif getattr(raw_data.raw_data, '_paths', None):
-        nstot = 0
-        for i, bin_file in enumerate(raw_data.raw_data._paths):
-            ns, _ = raw_data.raw_data._mmaps[i].shape
-            nstot += ns
-            if i == (len(raw_data.raw_data._paths) - 1):
-                ns2add = ceil(ns / ctx.params.NT) * ctx.params.NT - ns
-            else:
-                ns2add = 0
-            decompress_destripe_cbin(bin_file, append=i > 0, ns2add=ns2add, **kwargs)
-    else:  # in the case of cbin IBL files
-        assert raw_data.raw_data.n_parts == 1
-        bin_file = Path(raw_data.raw_data.name)
-        ns2add = ceil(raw_data.n_samples / ctx.params.NT) * ctx.params.NT - raw_data.n_samples
-        decompress_destripe_cbin(bin_file, ns2add=ns2add, **kwargs)
+    ns2add = ceil(raw_data.ns / ctx.params.NT) * ctx.params.NT - raw_data.ns
+    decompress_destripe_cbin(raw_data.file_bin, ns2add=ns2add, **kwargs)

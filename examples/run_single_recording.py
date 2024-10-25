@@ -5,9 +5,9 @@ import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from viz import reports
 
-SCRATCH_DIR = Path('/mnt/h0/iblsort')
-FILE_RECORDING = '/mnt/s0/Data/Subjects/MT_001/2024-07-16/001/raw_ephys_data/probe01a/_spikeglx_ephysData_g0_t0.imec1.ap.cbin'
-OUTPUT_DIR = '/mnt/h0/iblsort/raw_sorting_output'
+SCRATCH_DIR = Path('/home/olivier/scratch')
+FILE_RECORDING = '/datadisk/Data/neuropixel/integration_tests/quarter_density/Subjects/KM_012/2024-03-05/002/raw_ephys_data/probe00/_spikeglx_ephysData_g0_t0.imec0.ap.bin'
+OUTPUT_DIR = '/datadisk/Data/neuropixel/integration_tests/quarter_density'
 
 override_params = {}  # here it is possible to set some parameters for the run
 
@@ -37,7 +37,7 @@ def spike_sort_recording(bin_file, output_dir):
         params[k] = override_params[k]
 
     run_spike_sorting_ibl(bin_file, scratch_dir=SCRATCH_DIR, params=params,
-                          ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='DEBUG')
+                          ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO')
 
     reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
                              raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,

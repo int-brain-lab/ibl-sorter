@@ -4,14 +4,15 @@ from pathlib import Path, PurePath
 
 import numpy as np
 
+import spikeglx
+
 from .preprocess import get_good_channels, get_whitening_matrix, get_Nbatch, destriping
 from .cluster import clusterSingleBatches
 from .datashift2 import datashift2
 from .learn import learnAndSolve8b
 from .postprocess import find_merges, splitAllClusters, set_cutoff, rezToPhy
-from .utils import Bunch, Context, memmap_large_array, load_probe, copy_bunch, DataLoader, \
-                RawDataLoader
-from .params import KilosortParams
+from .utils import Bunch, Context, memmap_large_array, load_probe, copy_bunch, DataLoader
+from .params import KilosortParams, MotionEstimationParams
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,7 @@ def run(
     # motion params
     motion_params = motion_params or MotionEstimationParams()
 
-    raw_data = RawDataLoader(dat_path, **params.ephys_reader_args)
-
-    # Get probe.
-    probe = probe or default_probe(raw_data)
+    raw_data = spikeglx.Reader(dat_path) # params.ephys_reader_args
     assert probe
 
     # dir path
@@ -67,7 +65,7 @@ def run(
     assert dir_path.exists()
 
     # Create the context.
-    ctx_path = dir_path / ".kilosort" / Path(raw_data.name).name
+    ctx_path = dir_path / ".kilosort" / Path(raw_data.file_bin).name
     if clear_context:
         logger.info(f"Clearing context at {ctx_path} ...")
         shutil.rmtree(ctx_path, ignore_errors=True)
@@ -86,7 +84,7 @@ def run(
 
     if params.skip_preprocessing and not ctx.path("proc", ".dat").exists():
         shutil.copy(dat_path, ctx.path("proc", ".dat"))
-        ns2add = np.ceil(raw_data.n_samples / params.NT) * params.NT - raw_data.n_samples
+        ns2add = np.ceil(raw_data.ns / params.NT) * params.NT - raw_data.ns
         bytes2add = int(ns2add * params.n_channels * np.dtype(params.data_dtype).itemsize)
         print(bytes2add)
         with open(ctx.path("proc", ".dat"), "ab") as f:
@@ -112,8 +110,9 @@ def run(
 
     # channel detection method is either "raw_correlations" or "kilosort" based on the
     # "channel_detection_method" field in params
+
     probe.good_channels, probe.channel_labels = get_good_channels(
-        raw_data, params, probe, return_labels=True)
+        raw_data, params, probe, return_labels=True, qc_path=ctx.output_qc_path)
     assert probe.Nchan > 0
     
     # upper bound on the number of templates we can have
@@ -371,7 +370,7 @@ def run_spikesort(ctx, sanity_plots=True, plot_widgets=None):
         ctx.save(**out)
 
     # -------------------------------------------------------------------------
-    #  Main tracking and template matching algorithm.
+    # Main tracking and template matching algorithm.
     #
     # This function uses:
     #
