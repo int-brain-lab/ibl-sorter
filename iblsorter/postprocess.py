@@ -1316,12 +1316,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
     spike_times = st3[:, 0].astype(np.uint64)
     spike_templates = st3[:, 1].astype(np.uint32)
 
-    # If multiple datasets were run, output the original dataset each spike came from as well as
-    # the spike time within the dataset
-    if ctx.raw_data.multiple_datasets:
-        dataset_times = ctx.raw_data.n_samples
-        spike_datasets = np.searchsorted(dataset_times[1:], spike_times, side='right')
-        spike_times_corrected = spike_times - dataset_times[spike_datasets]
 
     # templateFeatures = cProj
     template_feature_inds = iNeigh.astype(np.uint32)
@@ -1366,22 +1360,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
     templatesInds = np.tile(np.arange(Nfilt), (Nchan, 1))
 
     # here we compute the amplitude of every template...
-
-    # unwhiten all the templates
-    # tempsUnW = cp.einsum('ijk,kl->ijl', templates, whiteningMatrixinv)
-    # tempsUnW = cp.zeros(templates.shape, dtype=np.float32, order='F')
-    # for t in tqdm(range(templates.shape[0]), desc="Unwhitening the templates"):
-    #     tempsUnW[t, :, :] = cp.dot(templates[t, :, :], whiteningMatrixInv)
-
-    # The amplitude on each channel is the positive peak minus the negative
-    # temp_chan_amps = tempsUnW.max(axis=1) - tempsUnW.min(axis=1)
-
-    # The template amplitude is the amplitude of its largest channel
-    # temp_amps_unscaled = temp_chan_amps.max(axis=1)
-
-    # assign all spikes the amplitude of their template multiplied by their
-    # scaling amplitudes
-    # temp_amps_unscaled = cp.(temp_amps_unscaled, axis=0).astype(np.float32)
     spike_amps = temp_amps_unscaled[spike_templates] * amplitudes
 
     # take the average of all spike amps to get actual template amps (since
@@ -1401,7 +1379,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
     cProjPC_shape = ir.cProjPC.shape
     cProjPC_shape = (st3.shape[0],) + cProjPC_shape[1:]
 
-    #TODO:
     tfw = NpyWriter(output_dir / 'template_features.npy', cProj_shape, np.float32)
     pcw = NpyWriter(output_dir / 'pc_features.npy', cProjPC_shape, np.float32)
 
@@ -1412,18 +1389,9 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
 
     spikes_to_keep = np.nonzero(~ix)[0]  # indices of the spikes to keep in the cProj index space
 
-    # if len(ix) > ir.cProj.shape[0]:
-    #     ix = ix[:cProj.shape[0]]
-    # else:
-    #     ix = np.pad(ix, (0, ir.cProj.shape[0] - len(ix)), mode='constant')
-    # assert ix.shape[0] == ir.cProj.shape[0] == ir.cProjPC.shape[0]
-
     k = int(ceil(float(N) / 100))  # 100 chunks
     assert k >= 1
     for i in tqdm(range(0, N, 100000), desc="Saving template and PC features"):
-        # NOTE: cProj and cProjPC still have the spikes assigned to -1 that have yet to be removed
-
-        # spike indices in cProj that need to be kept in this chunk
         ind = spikes_to_keep[isort[i:i + 100000]]
 
         cProj = ir.cProj[ind]
@@ -1433,10 +1401,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
         pcw.append(cProjPC)
     tfw.close()
     pcw.close()
-    # with open(, 'wb') as fp:
-    #     save_large_array(fp, templateFeatures)
-    # cProj = ir.cProj_c[cp.asnumpy(isort), :]
-    # cProjPC = ir.cProjPC_c[cp.asnumpy(isort), :, :]
 
     def _save(name, arr, dtype=None):
         cp.save(output_dir / f'{name}.npy', arr.astype(dtype or arr.dtype))
