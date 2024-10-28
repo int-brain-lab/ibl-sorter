@@ -7,7 +7,7 @@ matplotlib
 mock
 numba
 numpy
-ibllib @ git+https://github.com/int-brain-lab/ibllib@iblsort
+ibllib >= 2.40.0
 ibl-neuropixel >= 1.5.0
 ipython
 phylib >= 2.5.0

@@ -1,14 +1,9 @@
 # IBL Spike Sorting
 
-This is a Python port of the original MATLAB version of [Kilosort 2.5](https://github.com/MouseLand/Kilosort), written by Marius Pachitariu.
-
-TODO: changes
-The modifications are described in [this presentation](https://docs.google.com/presentation/d/18bD_vQU45bLDSxd_QW2kbzEg8_5o3dqO5Gm9huXbNKE/edit?usp=sharing)
-We are working on an updated version of the whitepaper, but in the meantime, you can refer to [the previous version here](https://doi.org/10.6084/m9.figshare.19705522.v3).
-
+This is the implementation of the IBL spike sorting pipeline described on this white paper: (https://doi.org/10.6084/m9.figshare.19705522.v4).
+The clustering part is based on the original MATLAB version of [Kilosort 2.5](https://github.com/MouseLand/Kilosort), written by Marius Pachitariu.
 
 ## Usage
-
 
 We provide a few datasets to explore parametrization and test on several brain regions.
 The smallest dataset is a 100 seconds excerpt to test the installation. Here is the minimal working example:
@@ -50,8 +45,8 @@ if __name__ == "__main__":
 ### System Requirements
 
 The code makes extensive use of the GPU via the CUDA framework. A high-end NVIDIA GPU with at least 8GB of memory is required.
-The solution has been deployed and tested on Cuda 12+ and Python 3.11.
-In June 2024, pyfftw was still not compatible with Python 3.12.
+The solution has been deployed and tested on Cuda 12+ and Python 3.12 in October 2024.
+
 
 ### Python environment
 
@@ -70,9 +65,9 @@ Installation for cuda 11.8
     pip install cupy-cuda11x
     pip install -e .
 
-Installation for cuda 12.1
+Installation for the latest cuda:
 
-    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu12.1
+    pip3 install torch torchvision torchaudio
     pip install cupy-cuda12x
     pip install -e .
 
@@ -85,8 +80,4 @@ from iblsorter.utils import cuda_installation_test
 cuda_installation_test()
 ```
 
-Then we can run the integration test
-    
-```shell
-python ./examples/integration_100s.py /mnt/s1/spikesorting/integration_tests/stand-alone/
-```
+Then we can run the integration test.

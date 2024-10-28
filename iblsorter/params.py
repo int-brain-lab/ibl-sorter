@@ -1,10 +1,12 @@
 from math import ceil
+from pathlib import Path
 from typing import List, Optional, Tuple, Literal
 import yaml
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator, DirectoryPath
 
+import iblsorter
 from .utils import Bunch
 
 
@@ -14,7 +16,9 @@ class IntegrationConfig(BaseModel):
     delete: bool
 
 
-def load_integration_config(yaml_path) -> IntegrationConfig:
+def load_integration_config(yaml_path=None) -> IntegrationConfig:
+    if yaml_path is None:
+        yaml_path = Path(iblsorter.__file__).parents[1].joinpath('integration', 'config.yaml')
     with open(yaml_path, 'r') as fid:
         config = yaml.safe_load(fid)
     return IntegrationConfig.model_validate(config)

@@ -7,10 +7,8 @@ from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from iblsorter.params import load_integration_config
 from viz import reports
 
-file_config = Path(iblsorter.__file__).parents[1].joinpath('integration', 'config.yaml')
-
 setup_logger('iblsorter', level='DEBUG')
-config = load_integration_config(file_config)
+config = load_integration_config()
 override_params = {}
 label = ""
 
@@ -24,14 +22,12 @@ def run_integration_test(bin_file):
 
     :param bin_file:
     """
-    output_dir = config.integration_data_path.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
-    ks_output_dir = output_dir.joinpath('pykilosort')
+    output_dir = config.integration_data_path.joinpath(
+        'testing_output', 'integration_100s', f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
+    ks_output_dir = output_dir.joinpath('iblsorter')
     alf_path = ks_output_dir.joinpath('alf')
-
-    # this can't be outside of a function, otherwise each multiprocessing job will execute this code!
     shutil.rmtree(config.scratch_dir, ignore_errors=True)
     config.scratch_dir.mkdir(exist_ok=True)
-
     ks_output_dir.mkdir(parents=True, exist_ok=True)
 
     params = ibl_pykilosort_params(bin_file)
@@ -48,10 +44,10 @@ def run_integration_test(bin_file):
         intermediate_directory.mkdir(exist_ok=True)
         shutil.copy(pre_proc_file, intermediate_directory)
 
-    reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
-                             raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
+    reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, out_path=output_dir, raster_plot=True,
+                             raw_plots=True, summary_stats=False, raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
                              vmax=0.05, d_bin=5, t_bin=0.001)
 
 
 if __name__ == "__main__":
-    run_integration_test(config.integration_data_path.joinpath("imec_385_100s.ap.bin"))
+    run_integration_test(config.integration_data_path.joinpath('testing_input', 'integration_100s', 'imec_385_100s.ap.bin'))
