@@ -1,13 +1,23 @@
 from math import ceil
-from typing import List, Optional, Tuple, Literal, Union
+from typing import List, Optional, Tuple, Literal
+import yaml
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator, validator
+from pydantic import BaseModel, Field, field_validator, DirectoryPath
 
 from .utils import Bunch
 
-# TODO: design - Let's move all of this to a yaml file with sections so that its easier to read.
-#              - We can then just parse the yaml file to generate this.
+
+class IntegrationConfig(BaseModel):
+    integration_data_path: DirectoryPath
+    scratch_dir: DirectoryPath
+    delete: bool
+
+
+def load_integration_config(yaml_path) -> IntegrationConfig:
+    with open(yaml_path, 'r') as fid:
+        config = yaml.safe_load(fid)
+    return IntegrationConfig.model_validate(config)
 
 
 class Probe(BaseModel):

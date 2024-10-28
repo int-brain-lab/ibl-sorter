@@ -1,11 +1,14 @@
 """
 This is an integration test on the IBL task
 """
-from pathlib import Path
+import datetime
 import logging
 import shutil
+from pathlib import Path
 from ibllib.pipes.ephys_tasks import SpikeSorting
 from iblsorter.ibl import download_test_data
+
+logger = logging.getLogger('iblsorter')
 
 SCRATCH_FOLDER = Path('/home/olivier/scratch')
 PATH_INTEGRATION = Path("/mnt/s1/spikesorting/integration_tests")
@@ -13,11 +16,8 @@ PATH_INTEGRATION = Path("/mnt/s1/spikesorting/integration_tests")
 
 if __name__ == "__main__":
 
-    import datetime
     PATH_INTEGRATION.joinpath(f"{datetime.datetime.now().isoformat().replace(':', '')}.temp").touch()
-
     download_test_data(PATH_INTEGRATION.joinpath('ibl'))
-    logger = logging.getLogger('iblsorter')
     path_probe = PATH_INTEGRATION.joinpath("ibl", "probe01")
     testing_path = PATH_INTEGRATION.joinpath("testing_output")
     shutil.rmtree(testing_path, ignore_errors=True)

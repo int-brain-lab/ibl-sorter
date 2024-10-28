@@ -1420,11 +1420,6 @@ def rezToPhy(ctx, dat_path=None, output_dir=None):
         # Save two copies as spike_clusters gets modified by Phy during manual curation
         _save('spike_templates', spike_templates, np.uint32)
         _save('spike_clusters', spike_templates, np.uint32)
-
-        if ctx.raw_data.multiple_datasets:
-            _save('spike_datasets', spike_datasets)
-            _save('spike_times_corrected', spike_times_corrected)
-
         _save('amplitudes', amplitudes)
         # _save('templates', templates)
         _save('templates_ind', templatesInds)

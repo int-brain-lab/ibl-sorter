@@ -1,6 +1,6 @@
 click
 dartsort @ git+https://github.com/cwindolf/dartsort@0.1.1
-dredge @ git+https://github.com/evarol/dredge@main
+dredge @ git+https://github.com/evarol/dredge@v0.2.2
 hdbscan
 h5py
 matplotlib
@@ -8,7 +8,7 @@ mock
 numba
 numpy
 ibllib @ git+https://github.com/int-brain-lab/ibllib@iblsort
-ibl-neuropixel >= 1.0.1
+ibl-neuropixel >= 1.5.0
 ipython
 phylib >= 2.5.0
 pydantic
@@ -19,3 +19,4 @@ scipy
 spikeinterface
 tqdm
 viewephys
+yaml

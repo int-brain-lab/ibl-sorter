@@ -6,7 +6,7 @@ import shutil
 
 import numpy as np
 
-from iblutil.util import setup_logger
+from iblutil.util import log_to_file
 import spikeglx
 import neuropixel
 from ibllib.ephys import spikes
@@ -64,7 +64,7 @@ def _sample2v(ap_file):
 
 
 def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
-                          ks_output_dir=None, alf_path=None, log_level='INFO', stop_after=None, 
+                          ks_output_dir=None, alf_path=None, stop_after=None,
                           params=None, motion_params=None):
     """
     This runs the spike sorting and outputs the raw pykilosort without ALF conversion
@@ -74,18 +74,17 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     :param ks_output_dir: string or Path: output directory defaults to None, in which case it will output in the
      scratch directory.
     :param alf_path: strint or Path, optional: if specified, performs ks to ALF conversion in the specified folder
-    :param log_level: string, optional, defaults to 'INFO'
     :return:
     """
-    START_TIME = datetime.datetime.now()
-    # handles all the paths infrastructure
     assert scratch_dir is not None
+    START_TIME = datetime.datetime.now()
+    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_kilosort.log")
+    log_to_file('iblsorter', filename=log_file)
+    # handles all the path
     bin_file = _get_multi_parts_records(bin_file)
     scratch_dir.mkdir(exist_ok=True, parents=True)
     ks_output_dir = Path(ks_output_dir) if ks_output_dir is not None else scratch_dir.joinpath('output')
     ks_output_dir.mkdir(exist_ok=True, parents=True)
-    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_kilosort.log")
-    setup_logger(name='', level=log_level, file=log_file)
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)

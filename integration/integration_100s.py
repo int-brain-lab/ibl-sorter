@@ -1,16 +1,16 @@
 import shutil
 from pathlib import Path
+from iblutil.util import setup_logger
 
 import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
+from iblsorter.params import load_integration_config
 from viz import reports
 
-INTEGRATION_DATA_PATH = Path("/datadisk/Data/neuropixel/integration_tests/stand-alone")
-SCRATCH_DIR = Path.home().joinpath("scratch", 'iblsort')
-print(f"Using integration data path: {INTEGRATION_DATA_PATH}")
+file_config = Path(iblsorter.__file__).parents[1].joinpath('integration', 'config.yaml')
 
-DELETE = True  # delete the intermediate run products, if False they'll be copied over
-
+setup_logger('iblsorter', level='DEBUG')
+config = load_integration_config(file_config)
 override_params = {}
 label = ""
 
@@ -24,13 +24,13 @@ def run_integration_test(bin_file):
 
     :param bin_file:
     """
-    output_dir = INTEGRATION_DATA_PATH.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
+    output_dir = config.integration_data_path.joinpath(f"{iblsorter.__version__}" + label, bin_file.name.split('.')[0])
     ks_output_dir = output_dir.joinpath('pykilosort')
     alf_path = ks_output_dir.joinpath('alf')
 
     # this can't be outside of a function, otherwise each multiprocessing job will execute this code!
-    shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
-    SCRATCH_DIR.mkdir(exist_ok=True)
+    shutil.rmtree(config.scratch_dir, ignore_errors=True)
+    config.scratch_dir.mkdir(exist_ok=True)
 
     ks_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -38,11 +38,11 @@ def run_integration_test(bin_file):
     for k in override_params:
         params[k] = override_params[k]
 
-    run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=SCRATCH_DIR, params=params,
-                          ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='DEBUG')
+    run_spike_sorting_ibl(bin_file, delete=config.delete, scratch_dir=config.scratch_dir, params=params,
+                          ks_output_dir=ks_output_dir, alf_path=alf_path)
     # we copy the temporary files to the output directory if we want to investigate them
-    if not DELETE:
-        working_directory = SCRATCH_DIR.joinpath('.kilosort', bin_file.stem)
+    if not config.delete:
+        working_directory = config.scratch_dir.joinpath('.kilosort', bin_file.stem)
         pre_proc_file = working_directory.joinpath('proc.dat')
         intermediate_directory = ks_output_dir.joinpath('intermediate')
         intermediate_directory.mkdir(exist_ok=True)
@@ -54,4 +54,4 @@ def run_integration_test(bin_file):
 
 
 if __name__ == "__main__":
-    run_integration_test(INTEGRATION_DATA_PATH.joinpath("imec_385_100s.ap.bin"))
+    run_integration_test(config.integration_data_path.joinpath("imec_385_100s.ap.bin"))
