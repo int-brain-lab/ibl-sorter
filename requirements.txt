@@ -19,4 +19,4 @@ scipy
 spikeinterface
 tqdm
 viewephys
-yaml
+pyyaml
