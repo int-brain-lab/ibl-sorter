@@ -1,21 +1,18 @@
-import shutil
+import argparse
 from pathlib import Path
+import shutil
 
-import iblsorter
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from viz import reports
 
-SCRATCH_DIR = Path('/home/olivier/scratch')
-FILE_RECORDING = '/datadisk/Data/neuropixel/integration_tests/quarter_density/Subjects/KM_012/2024-03-05/002/raw_ephys_data/probe00/_spikeglx_ephysData_g0_t0.imec0.ap.bin'
-OUTPUT_DIR = '/datadisk/Data/neuropixel/integration_tests/quarter_density'
-
+SCRATCH_DIR = Path('/mnt/h0/iblsort')  # set this to a fast SSD drive with at least 500Gb free space
 override_params = {}  # here it is possible to set some parameters for the run
 
 
 def spike_sort_recording(bin_file, output_dir):
     """
     The folder architecture is as follows
-    ---- pykilosort  ks_output_dir
+    ---- iblsorter  ks_output_dir
     ---- alf_path  alf_path
 
     :param bin_file:
@@ -23,8 +20,8 @@ def spike_sort_recording(bin_file, output_dir):
     bin_file = Path(bin_file)
     output_dir = Path(output_dir)
 
-    ks_output_dir = output_dir.joinpath('pykilosort')
-    alf_path = ks_output_dir.joinpath('alf')
+    ks_output_dir = output_dir.joinpath('iblsorter')
+    alf_path = output_dir.joinpath('alf')
 
     # this can't be outside of a function, otherwise each multiprocessing job will execute this code!
     shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
@@ -37,7 +34,7 @@ def spike_sort_recording(bin_file, output_dir):
         params[k] = override_params[k]
 
     run_spike_sorting_ibl(bin_file, scratch_dir=SCRATCH_DIR, params=params,
-                          ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO')
+                          ks_output_dir=ks_output_dir, alf_path=alf_path)
 
     reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
                              raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
@@ -45,4 +42,8 @@ def spike_sort_recording(bin_file, output_dir):
 
 
 if __name__ == "__main__":
-    spike_sort_recording(bin_file=FILE_RECORDING, output_dir=OUTPUT_DIR)
+    parser = argparse.ArgumentParser(description='Run spike sorting on a session')
+    parser.add_argument('recording_file', help='The full path file of the AP recording')
+    parser.add_argument('output_directory', help='The full path to the output directory')
+    args = parser.parse_args()
+    spike_sort_recording(bin_file=args.recording_file, output_dir=args.output_directory)
