@@ -5,14 +5,14 @@
 The command to run a PID is the following:
 ```shell
 tmux
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/docker/run_ibl_pid.py 39e6c9a9-2241-4781-9ed6-db45979207e7
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/examples/run_single_recording.py /path/to/binfile /path/to/output --scratch_dir /home/scratch/iblsorter
 ```
 
  
 For IBL users, the command to run spike sorting for a registered PID is the following:
 ```shell
 tmux
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/docker/run_ibl_pid.py 39e6c9a9-2241-4781-9ed6-db45979207e7
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/docker/run_ibl_pid.py eid probe00 --
 ```
 
 ## Installation of the container
@@ -39,7 +39,7 @@ sudo docker compose up -d
 
 And this is the command to access a shell in the container:
 ```shell
-cd Documents/PYTHON/ibl-sorter/docker/
+cd ~/Documents/PYTHON/ibl-sorter/docker/
 sudo docker compose exec spikesorter /bin/bash
 ``` 
 
