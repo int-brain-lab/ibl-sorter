@@ -1,15 +1,24 @@
-import argparse
 from pathlib import Path
 import shutil
 
+from pydantic import Field, DirectoryPath, FilePath
+from pydantic_settings import BaseSettings, CliPositionalArg
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from viz import reports
 
-SCRATCH_DIR = Path('/mnt/h0/iblsort')  # set this to a fast SSD drive with at least 500Gb free space
+
+SCRATCH_DIR = Path.home().joinpath('scratch', 'iblsorter')
 override_params = {}  # here it is possible to set some parameters for the run
 
 
-def spike_sort_recording(bin_file, output_dir):
+class CommandLineArguments(BaseSettings, cli_parse_args=True):
+    recording_file: CliPositionalArg[FilePath] = Field(description='The full path file of the AP recording')
+    output_directory: CliPositionalArg[Path] = Field(description='The full path to the output directory')
+    scratch_directory: Path = Field(description='Raw Data Directory', default=SCRATCH_DIR)
+
+
+
+def spike_sort_recording(bin_file, output_dir, scratch_dir):
     """
     The folder architecture is as follows
     ---- iblsorter  ks_output_dir
@@ -24,8 +33,8 @@ def spike_sort_recording(bin_file, output_dir):
     alf_path = output_dir.joinpath('alf')
 
     # this can't be outside of a function, otherwise each multiprocessing job will execute this code!
-    shutil.rmtree(SCRATCH_DIR, ignore_errors=True)
-    SCRATCH_DIR.mkdir(exist_ok=True)
+    shutil.rmtree(scratch_dir, ignore_errors=True)
+    scratch_dir.mkdir(exist_ok=True)
 
     ks_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -33,7 +42,7 @@ def spike_sort_recording(bin_file, output_dir):
     for k in override_params:
         params[k] = override_params[k]
 
-    run_spike_sorting_ibl(bin_file, scratch_dir=SCRATCH_DIR, params=params,
+    run_spike_sorting_ibl(bin_file, scratch_dir=scratch_dir, params=params,
                           ks_output_dir=ks_output_dir, alf_path=alf_path)
 
     reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
@@ -42,8 +51,6 @@ def spike_sort_recording(bin_file, output_dir):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run spike sorting on a session')
-    parser.add_argument('recording_file', help='The full path file of the AP recording')
-    parser.add_argument('output_directory', help='The full path to the output directory')
-    args = parser.parse_args()
-    spike_sort_recording(bin_file=args.recording_file, output_dir=args.output_directory)
+    # ['run_single_recording.py', '/mnt/ap.bin', '/home/output', '--scratch_directory','/mnt/scratch/iblsorter']
+    args = CommandLineArguments().model_dump()
+    spike_sort_recording(bin_file=args['recording_file'], output_dir=args['output_directory'], scratch_dir=args['scratch_directory'])
