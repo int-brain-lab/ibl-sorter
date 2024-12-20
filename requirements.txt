@@ -12,6 +12,7 @@ ibl-neuropixel >= 1.5.0
 ipython
 phylib >= 2.5.0
 pydantic
+pydantic-settings
 pyfftw
 pytest
 pyqt5

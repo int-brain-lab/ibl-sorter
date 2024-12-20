@@ -12,7 +12,7 @@ sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/ex
 For IBL users, the command to run spike sorting for a registered PID is the following:
 ```shell
 tmux
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/docker/run_ibl_pid.py eid probe00 --
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/examples/run_ibl_pid.py eid probe00 --cache_dir /mnt/s0/ONE --cache_dir /mnt/s0/scratch
 ```
 
 ## Installation of the container
