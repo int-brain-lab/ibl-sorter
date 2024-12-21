@@ -109,7 +109,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         if isinstance(h, logging.FileHandler) and Path(h.baseFilename) == log_file:
             root_logger.removeHandler(h)
     # move the log file and all qcs to the output folder
-    shutil.move(log_file, ks_output_dir.joinpath('spike_sorting_iblsorter.log'))
+    shutil.move(log_file, ks_output_dir.joinpath('_ibl_log.info_iblsorter.log'))
     # convert the pykilosort output to ALF IBL format
     if alf_path is not None:
         s2v = _sample2v(bin_file)
