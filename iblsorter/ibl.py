@@ -78,8 +78,8 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     """
     assert scratch_dir is not None
     START_TIME = datetime.datetime.now()
-    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_kilosort.log")
-    log_to_file('iblsorter', filename=log_file)
+    log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_iblsorter.log")
+    log_to_file(_logger, filename=log_file)
     # handles all the path
     bin_file = _get_multi_parts_records(bin_file)
     scratch_dir.mkdir(exist_ok=True, parents=True)
@@ -91,7 +91,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     if motion_params is None:
         motion_params = ibl_dredge_params(params)
     try:
-        _logger.info(f"Starting Pykilosort version {__version__}")
+        _logger.info(f"Starting iblsorter version {__version__}")
         _logger.info(f"Scratch dir {scratch_dir}")
         _logger.info(f"Output dir {ks_output_dir}")
         _logger.info(f"Data dir {bin_file.parent}")
@@ -104,10 +104,9 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.exception("Error in the main loop")
         raise e
     # removes the file handler of the logger
-    root_logger = logging.getLogger()
-    for h in root_logger.handlers:
+    for h in _logger.handlers:
         if isinstance(h, logging.FileHandler) and Path(h.baseFilename) == log_file:
-            root_logger.removeHandler(h)
+            _logger.removeHandler(h)
     # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('_ibl_log.info_iblsorter.log'))
     # convert the pykilosort output to ALF IBL format
