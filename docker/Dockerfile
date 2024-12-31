@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir -p /root/Documents/PYTHON
 WORKDIR /root/Documents/PYTHON
 
-RUN git clone https://github.com/int-brain-lab/ibl-sorter.git
-RUN git clone https://github.com/int-brain-lab/ibllib.git
+RUN git clone -b aws https://github.com/int-brain-lab/ibl-sorter.git
+RUN git clone -b aws https://github.com/int-brain-lab/ibllib.git
 RUN git clone https://github.com/int-brain-lab/iblscripts.git
 RUN git clone -b 0.1.1 https://github.com/cwindolf/dartsort.git
 RUN git clone -b v0.2.2 https://github.com/evarol/dredge.git
