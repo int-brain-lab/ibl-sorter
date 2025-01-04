@@ -40,8 +40,9 @@ if __name__ == "__main__":
     ssjob = SpikeSorting(session_path, one=one, pname=pname, device_collection='raw_ephys_data', location="EC2", on_error='raise',
                          scratch_folder=args.scratch_dir)
     ssjob.run()
-    ssjob.register_datasets(labs='churchlandlab', force=True)
-    sync_job.register_datasets(labs='churchlandlab', force=True)
+    lab_name = session_path.parts[-5]
+    ssjob.register_datasets(labs=lab_name, force=True)
+    sync_job.register_datasets(labs=lab_name, force=True)
     if REMOVE_DATA:
         dir_sorter = session_path.joinpath('spike_sorters', 'iblsorter', pname)
         print(f'Removing sorter directory: {dir_sorter}')
