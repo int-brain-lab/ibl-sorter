@@ -9,6 +9,9 @@ Usage with docker::
 
 It is safer to stop / start the docker container for each run to flush the GPU memory on some machines
 """
+import os
+os.environ["TQDM_DISABLE"] = "1"
+
 from pathlib import Path
 import shutil
 
