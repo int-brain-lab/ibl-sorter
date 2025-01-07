@@ -30,7 +30,7 @@ sudo ./setup_nvidia_container_toolkit.sh
 
 From the `./docker` folder, run the following command. This will take 5 to 10 mins
 ```shell
-sudo docker buildx build . --platform linux/amd64 --tag int-brain-lab/iblsorter:latest
+sudo docker buildx build . --platform linux/amd64 --tag int-brain-lab/iblsorter:latest  --no-cache
 ```
 Once the image is built, create and run the container in the background
 ```shell

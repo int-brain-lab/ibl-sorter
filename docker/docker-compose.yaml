@@ -1,6 +1,7 @@
 services:
   spikesorter:
     image: int-brain-lab/iblsorter:latest
+    container_name: spikesorter
     deploy:
       resources:
         reservations:
