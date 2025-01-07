@@ -1093,14 +1093,14 @@ def learnAndSolve8b(ctx, sanity_plots=False, plot_widgets=None, plot_pos=None):
             st0 = st0[overlap_idx] - overlap    # (nspikes,)
             assert np.all(st0 < NT)
             n_after = len(st0)
-            logger.info("Removed %d spikes in the overlap", n_before - n_after)
+            logger.debug("Removed %d spikes in the overlap", n_before - n_after)
             id0 = id0[overlap_idx]              # (nspikes,)
             x0 = x0[overlap_idx]                # (nspikes,)
             vexp = vexp[overlap_idx]            # (nspikes,)
             featW = featW[:, overlap_idx]       # (32, nspikes)
             featPC = featPC[..., overlap_idx]   # (32, 3, nspikes)
 
-        logger.info("Found %d spikes.", x0.size)
+        logger.debug("Found %d spikes.", x0.size)
 
         # Sometimes nsp can get transposed (think this has to do with it being
         # a single element in one iteration, to which elements are added
