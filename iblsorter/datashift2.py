@@ -1,8 +1,7 @@
-from math import floor
 import logging
 import os
 
-from tqdm.auto import tqdm, trange
+from tqdm.auto import tqdm
 import numpy as np
 import cupy as cp
 import dartsort
@@ -14,7 +13,6 @@ import spikeinterface.full as si
 import torch
 
 from .postprocess import my_conv2_cpu
-from .learn import extractTemplatesfromSnippets
 from .utils import get_cuda, Bunch
 
 logger = logging.getLogger(__name__)

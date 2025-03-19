@@ -12,3 +12,4 @@ services:
     volumes:
       - /mnt/s0:/mnt/s0
       - /home/$USER/.one:/root/.one
+      - /mnt/h1:/mnt/h1
