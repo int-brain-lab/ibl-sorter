@@ -10,7 +10,7 @@ from iblutil.util import log_to_file
 import spikeglx
 import neuropixel
 from ibllib.ephys import spikes
-from one.alf.files import get_session_path
+from one.alf.path import get_session_path
 from one.remote import aws
 from iblsorter import run, Bunch, __version__
 from iblsorter.params import KilosortParams, MotionEstimationParams
