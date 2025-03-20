@@ -4,43 +4,34 @@
 
 The command to run a PID is the following:
 ```shell
-tmux
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/examples/run_single_recording.py /path/to/binfile /path/to/output --scratch_dir /home/scratch/iblsorter
+BINFILE=/mnt/s1/spikesorting/integration_tests/testing_input/integration_100s/imec_385_100s.ap.bin
+cd /home/olivier/PycharmProjects/pykilosort/ibl-sorter/docker
+
+docker run --rm --gpus 1 -it internationalbrainlab/iblsorter:latest 
+# from cupy_backends.cuda.libs import cusolver
+docker run \
+  --rm \
+  --name spikesorter \
+  --gpus 1 \
+  -v /mnt/s1:/mnt/s1 \
+  -v /home/$USER/.one:/root/.one \
+  -v /mnt/h1:/scratch \
+  internationalbrainlab/iblsorter:latest \
+  python /root/Documents/PYTHON/ibl-sorter/examples/run_single_recording.py $BINFILE  /mnt/h1/iblsorter_integration --scratch_directory /scratch
+
 ```
 
  
 For IBL users, the command to run spike sorting for a registered PID is the following:
 ```shell
-tmux
-sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/examples/run_ibl_recording.py eid probe00 --cache_dir /mnt/s0/ONE --scratch_dir /mnt/s0/scratch
+sudo docker compose exec spikesorter python /root/Documents/PYTHON/ibl-sorter/examples/run_ibl_recording.py eid probe00 --cache_dir /mnt/s0/ONE
+```
+
+This is the command to get access to a shell inside of the container: 
+```shell
+sudo docker compose exec spikesorter /bin/bash
 ```
 
 ## Installation of the container
 
-Pre-requisites:
-- nvidia driver
-- Docker
-- Nvidia Container toolkit
-
-```
-sudo ./setup_nvidia_container_toolkit.sh
-```
-
-### Building the image, and creating the container
-
-From the `./docker` folder, run the following command. This will take 5 to 10 mins
-```shell
-sudo docker buildx build . --platform linux/amd64 --tag int-brain-lab/iblsorter:latest  --no-cache
-```
-Once the image is built, create and run the container in the background
-```shell
-sudo docker compose up -d 
-```
-
-And this is the command to access a shell in the container:
-```shell
-cd ~/Documents/PYTHON/ibl-sorter/docker/
-sudo docker compose exec spikesorter /bin/bash
-``` 
-
-
+The container Dockerfile and building procedure is described a the following repository: https://github.com/int-brain-lab/iblsre/tree/main/servers

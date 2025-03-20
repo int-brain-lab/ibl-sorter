@@ -1,6 +1,6 @@
 services:
   spikesorter:
-    image: int-brain-lab/iblsorter:latest
+    image: internationalbrainlab/iblsorter:latest
     container_name: spikesorter
     deploy:
       resources:
@@ -12,4 +12,4 @@ services:
     volumes:
       - /mnt/s0:/mnt/s0
       - /home/$USER/.one:/root/.one
-      - /mnt/h1:/mnt/h1
+      - /mnt/h1:/scratch

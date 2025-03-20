@@ -4,8 +4,6 @@ import shutil
 from pydantic import Field, DirectoryPath, FilePath
 from pydantic_settings import BaseSettings, CliPositionalArg
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
-from viz import reports
-
 
 SCRATCH_DIR = Path.home().joinpath('scratch', 'iblsorter')
 override_params = {}  # here it is possible to set some parameters for the run
@@ -44,10 +42,6 @@ def spike_sort_recording(bin_file, output_dir, scratch_dir):
 
     run_spike_sorting_ibl(bin_file, scratch_dir=scratch_dir, params=params,
                           ks_output_dir=ks_output_dir, alf_path=alf_path)
-
-    reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, raster_plot=True, raw_plots=True, summary_stats=False,
-                             raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
-                             vmax=0.05, d_bin=5, t_bin=0.001)
 
 
 if __name__ == "__main__":
