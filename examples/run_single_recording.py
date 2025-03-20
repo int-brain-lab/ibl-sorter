@@ -4,6 +4,7 @@ import shutil
 from pydantic import Field, DirectoryPath, FilePath
 from pydantic_settings import BaseSettings, CliPositionalArg
 from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
+from iblutil.util import setup_logger
 
 SCRATCH_DIR = Path.home().joinpath('scratch', 'iblsorter')
 override_params = {}  # here it is possible to set some parameters for the run
@@ -46,5 +47,6 @@ def spike_sort_recording(bin_file, output_dir, scratch_dir):
 
 if __name__ == "__main__":
     # ['run_single_recording.py', '/mnt/ap.bin', '/home/output', '--scratch_directory','/mnt/scratch/iblsorter']
+    setup_logger(name='iblsorter', level='INFO')
     args = CommandLineArguments().model_dump()
     spike_sort_recording(bin_file=args['recording_file'], output_dir=args['output_directory'], scratch_dir=args['scratch_directory'])
