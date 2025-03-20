@@ -493,9 +493,14 @@ def dartsort_detector(ctx, probe, params):
                 ),
             )
     # at 40k spikes per chunk, should factor 2 Gb memory per job
-    total_memory = torch.cuda.mem_get_info()[1] / 1024 ** 3
-    njobs = int(np.minimum(np.floor(total_memory / (2 * 1.5)), 12))
-    logger.info(f"Using {njobs} GPU jobs for spike detection, targeting memory usage of {njobs * 2} Gb over {total_memory} Gb")
+    if (njobs := os.getenv('DART_MAX_JOBS', None)) is None:
+        total_memory = torch.cuda.mem_get_info()[1] / 1024 ** 3
+        njobs = int(np.minimum(np.floor(total_memory / (2 * 1.5)), 12))
+        logger.info(f"Using {njobs} GPU jobs for spike detection, targeting memory usage of {njobs * 2} Gb over {total_memory} Gb")
+    else:
+        njobs = int(njobs)
+        logger.info(f"Using {njobs} GPU jobs for spike detection, from environment variable DART_MAX_JOBS")
+
     peeler.load_or_fit_and_save_models(
                 ctx.context_path / "thresholding_models", n_jobs=njobs
             )
