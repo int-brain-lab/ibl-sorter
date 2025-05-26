@@ -13,8 +13,8 @@ from tqdm.auto import tqdm
 import numpy as np
 from numpy.lib.format import (
     _check_version, _write_array_header, header_data_from_array_1_0, dtype_to_descr)
-import cupy as cp
 import torch
+import cupy as cp
 
 from phylib.io.traces import get_ephys_reader
 from iblutil.util import Bunch
