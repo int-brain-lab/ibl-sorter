@@ -3,63 +3,16 @@ from math import ceil
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import butter
 import scipy.stats
 import cupy as cp
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 
 import iblsorter.qc
-from .cptools import lfilter, median
 from ibldsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
 import ibldsp.plots
 
 logger = logging.getLogger(__name__)
-
-
-def get_filter_params(fs, fshigh=None, fslow=None):
-    if fslow and fslow < fs / 2:
-        # butterworth filter with only 3 nodes (otherwise it's unstable for float32)
-        return butter(3, (2 * fshigh / fs, 2 * fslow / fs), 'bandpass')
-    else:
-        # butterworth filter with only 3 nodes (otherwise it's unstable for float32)
-        return butter(3, fshigh / fs * 2, 'high')
-
-
-def gpufilter(buff, chanMap=None, fs=None, fslow=None, fshigh=None, car=True):
-    # filter this batch of data after common average referencing with the
-    # median
-    # buff is timepoints by channels
-    # chanMap are indices of the channels to be kep
-    # params.fs and params.fshigh are sampling and high-pass frequencies respectively
-    # if params.fslow is present, it is used as low-pass frequency (discouraged)
-
-    dataRAW = buff  # .T  # NOTE: we no longer use Fortran order upstream
-    assert dataRAW.flags.c_contiguous
-    assert dataRAW.ndim == 2
-    assert dataRAW.shape[0] > dataRAW.shape[1]
-    if chanMap is not None and len(chanMap):
-        dataRAW = dataRAW[:, chanMap]  # subsample only good channels
-    assert dataRAW.ndim == 2
-
-    # subtract the mean from each channel
-    dataRAW = dataRAW - cp.mean(dataRAW, axis=0)  # subtract mean of each channel
-    assert dataRAW.ndim == 2
-
-    # CAR, common average referencing by median
-    if car:
-        # subtract median across channels
-        dataRAW = dataRAW - median(dataRAW, axis=1)[:, np.newaxis]
-
-    # set up the parameters of the filter
-    filter_params = get_filter_params(fs, fshigh=fshigh, fslow=fslow)
-
-    # next four lines should be equivalent to filtfilt (which cannot be
-    # used because it requires float64)
-    datr = lfilter(*filter_params, dataRAW, axis=0)  # causal forward filter
-    datr = lfilter(*filter_params, datr, axis=0, reverse=True)  # backward
-    return datr
-
 
 # TODO: unclear - Do we really need these, can we not just pick a type for the config?
 #               - We can move this complexity into a "config parsing" stage.
@@ -190,7 +143,8 @@ def get_data_covariance_matrix(raw_data, params, probe, nSkipCov=None):
     for icc, t0 in enumerate(tqdm(t0s, desc="Computing covariance matrix")):
         s0 = slice(int(t0 * params.fs), int((t0 + 0.4) * params.fs))
         raw = raw_data[s0][:, :probe.Nchan].T.astype(np.float32)
-        datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels)  / probe['sample2volt']
+        datr = destripe(raw, fs=params.fs, h=probe, channel_labels=probe.channel_labels,
+                        butter_kwargs=get_butter_kwargs(params))  / probe['sample2volt']
         assert not (np.any(np.isnan(datr)) or np.any(np.isinf(datr))), "destriping unexpectedly produced NaNs"
         # attempt at fancy regularization, but this was very slow
         # from joblib import Parallel, delayed, cpu_count
@@ -295,6 +249,17 @@ def get_Nbatch(raw_data, params):
     return ceil(n_samples / params.NT)  # number of data batches
 
 
+def get_butter_kwargs(params):
+    fs, fshigh, fslow = params.fs, params.fshigh, params.fslow
+    if fslow and fslow < fs / 2:
+        assert fslow > fshigh
+        # butterworth filter with only 3 nodes (otherwise it's unstable for float32)
+        return dict(N=3, Wn=(fshigh, fslow), fs=fs, btype='bandpass')
+    else:
+        # butterworth filter with only 3 nodes (otherwise it's unstable for float32)
+        return dict(N=3, Wn=fshigh, fs=fs, btype='highpass')
+
+
 def destriping(ctx):
     """IBL destriping - multiprocessing CPU version for the time being, although leveraging the GPU
     for the many FFTs performed would probably be quite beneficial """
@@ -305,8 +270,10 @@ def destriping(ctx):
     # get the bad channels
     # detect_bad_channels_cbin
     kwargs = dict(output_file=ir.proc_path, wrot=wrot, nc_out=probe.Nchan, h=probe.h,
-                  butter_kwargs={'N': 3, 'Wn': ctx.params.fshigh / ctx.params.fs * 2, 'btype': 'highpass'},
-                  output_qc_path=ctx.output_qc_path)
+                  butter_kwargs=get_butter_kwargs(ctx.params),
+                  output_qc_path=ctx.output_qc_path,
+                  reject_channels=ctx.probe.channel_labels
+                  )
     # _iblqc_ephysSaturation.samples.npy
     logger.info("Pre-processing: applying destriping option to the raw data")
     ns2add = ceil(raw_data.ns / ctx.params.NT) * ctx.params.NT - raw_data.ns

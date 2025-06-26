@@ -10,6 +10,9 @@ Added / Removed / Changed / Fixed
 
 ### Added
 - documentation and examples for EC2 and Docker integration
+- in IBL processing function, option to extract the waveforms
+### Fixed
+- bad channels labels were not passed down to decompress_destripe_cbin pre-processing function
 
 
 ## [1.9.0]
