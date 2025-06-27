@@ -6,15 +6,18 @@ import shutil
 
 import numpy as np
 
-from iblutil.util import log_to_file
 import spikeglx
 import neuropixel
 from ibllib.ephys import spikes
+from iblutil.util import log_to_file
+import one.alf.io as alfio
 from one.alf.path import get_session_path
 from one.remote import aws
+
 from iblsorter import run, Bunch, __version__
 from iblsorter.params import KilosortParams, MotionEstimationParams
 
+from ibldsp.waveform_extraction import extract_wfs_cbin
 
 _logger = logging.getLogger(__name__)
 
@@ -65,16 +68,47 @@ def _sample2v(ap_file):
 
 def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
                           ks_output_dir=None, alf_path=None, stop_after=None,
-                          params=None, motion_params=None):
+                          params=None, motion_params=None, extract_waveforms=False):
     """
-    This runs the spike sorting and outputs the raw pykilosort without ALF conversion
-    :param bin_file: binary file full path
-    :param scratch_dir: working directory (home of the .kilosort folder) SSD drive preferred.
-    :param delete: bool, optional, defaults to True: whether or not to delete the .kilosort temp folder
-    :param ks_output_dir: string or Path: output directory defaults to None, in which case it will output in the
-     scratch directory.
-    :param alf_path: strint or Path, optional: if specified, performs ks to ALF conversion in the specified folder
-    :return:
+    Run spike sorting using iblsorter with IBL-specific configurations.
+
+    This function performs spike sorting on electrophysiology data using the pykilosort 2.5 algorithm
+    with International Brain Laboratory (IBL) pre-processing and configurations. It handles multi-part
+    recordings, manages temporary files, and can optionally convert the output to ALF format
+    and extract spike waveforms.
+
+    Parameters
+    ----------
+    bin_file : str, Path, list, or tuple
+        Path to the binary file containing electrophysiology data, or a list/tuple of paths
+        for multi-part recordings.
+    scratch_dir : Path or str
+        Working directory for temporary files during processing. SSD drive preferred for
+        performance. Required parameter.
+    delete : bool, optional
+        Whether to delete the temporary .kilosort folder after processing. Defaults to True.
+    ks_output_dir : str or Path, optional
+        Directory where the raw pykilosort output will be saved. If None (default),
+        a subdirectory 'output' will be created in the scratch directory.
+    alf_path : str or Path, optional
+        If specified, the pykilosort output will be converted to ALF format and saved
+        in this directory. If None (default), no ALF conversion is performed.
+    stop_after : str, optional
+        Name of processing stage after which to stop the pipeline. If None (default),
+        the full pipeline is executed.
+    params : KilosortParams, optional
+        Custom parameters for the pykilosort algorithm. If None (default),
+        default IBL parameters will be used.
+    motion_params : MotionEstimationParams, optional
+        Custom parameters for motion estimation. If None (default),
+        default IBL motion parameters will be used.
+    extract_waveforms : bool, optional
+        Whether to extract spike waveforms after sorting. Only applies if alf_path
+        is specified. Defaults to False.
+
+    Returns
+    -------
+    None
     """
     assert scratch_dir is not None
     START_TIME = datetime.datetime.now()
@@ -122,6 +156,9 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     # in production, we remove all of the temporary files after the run
     if delete:
         shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)
+    # now extract the waveforms if required
+    if extract_waveforms and alf_path is not None:
+        extract_waveforms_after_sorting(bin_file, alf_path, scratch_dir)
 
 
 def ibl_pykilosort_params(bin_file):
@@ -167,6 +204,50 @@ def probe_geometry(bin_file):
     probe.sample_shift = h['sample_shift']
     probe.h, probe.neuropixel_version, probe.sample2volt = (h, ver, s2v)
     return probe
+
+
+def extract_waveforms_after_sorting(bin_file, alf_dir, scratch_dir):
+    """
+    Extract spike waveforms from a binary file using spike sorting results.
+
+    This function loads spike sorting results from ALF files, extracts waveforms
+    from the binary recording file at the detected spike times, and saves the
+    extracted waveforms in ALF format.
+
+    Parameters
+    ----------
+    bin_file : str or Path
+        Path to the binary recording file from which to extract waveforms.
+    alf_dir : str or Path
+        Directory containing ALF files with spike sorting results and where
+        the extracted waveforms will be saved.
+    scratch_dir : str or Path
+        Directory for temporary files during waveform extraction.
+
+    Returns
+    -------
+    list
+        List of paths to the output waveform files that were created.
+    """
+    spikes = alfio.load_object(alf_dir, 'spikes', attribute=['samples', 'clusters'])
+    clusters = alfio.load_object(alf_dir, 'clusters', attribute=['channels'])
+    channels = alfio.load_object(alf_dir, 'channels')
+    _output_waveform_files = extract_wfs_cbin(
+        bin_file=bin_file,
+        output_dir=alf_dir,
+        spike_samples=spikes['samples'],
+        spike_clusters=spikes['clusters'],
+        spike_channels=clusters['channels'][spikes['clusters']],
+        channel_labels=channels['labels'],
+        max_wf=256,
+        trough_offset=42,
+        spike_length_samples=128,
+        chunksize_samples=int(30_000),
+        n_jobs=None,
+        preprocess_steps=["phase_shift", "bad_channel_interpolation", "butterworth", "car"],
+        scratch_dir=scratch_dir,
+    )
+    return _output_waveform_files
 
 
 def download_test_data(local_folder):
