@@ -8,7 +8,7 @@ mock
 numba
 numpy
 ibllib >= 2.40.0
-ibl-neuropixel >= 1.5.0
+ibl-neuropixel >= 1.8.1
 ipython
 phylib >= 2.5.0
 pydantic
