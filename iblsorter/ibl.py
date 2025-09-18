@@ -193,7 +193,7 @@ def probe_geometry(bin_file):
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1
-    probe.chanMap = np.arange(nc)
+    probe.chanMap = h['ind']
     probe.xc = h['x'] + h['shank'] * 200
     probe.yc = h['y']
     probe.x = h['x']
