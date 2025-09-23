@@ -8,8 +8,14 @@ Added / Removed / Changed / Fixed
 
 ### [1.11.0] 2025-09-18
 
+### Added
+- Documentation and instructions for integration tests and contribution guidelines.
+
 ### Changed
 - The saved channel_map now contains the index of sorted channels into the original raw data
+
+### Fixed
+- writing npy headers was using deprecated numpy functions 
 
 ## [1.10.0] 2025-06-27
 
