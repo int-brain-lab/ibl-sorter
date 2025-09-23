@@ -1,3 +1,4 @@
-integration_data_path: /datadisk/Data/neuropixel/integration_tests/stand-alone
-scratch_dir: /home/olivier/scratch/iblsort
+integration_data_path: /datadisk/Data/neuropixel/integration_tests
+scratch_dir: /home/olivier/scratch/ibl-sorter
 delete: true
+log_level: DEBUG
