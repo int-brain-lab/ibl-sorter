@@ -7,13 +7,13 @@ import numpy as np
 from pydantic import BaseModel, Field, field_validator, DirectoryPath
 
 import iblsorter
-from .utils import Bunch
 
 
 class IntegrationConfig(BaseModel):
     integration_data_path: DirectoryPath
     scratch_dir: DirectoryPath
     delete: bool
+    log_level: Literal['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL'] = 'INFO'
 
 
 def load_integration_config(yaml_path=None) -> IntegrationConfig:

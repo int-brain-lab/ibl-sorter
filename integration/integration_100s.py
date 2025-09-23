@@ -1,5 +1,4 @@
 import shutil
-from pathlib import Path
 from iblutil.util import setup_logger
 
 import iblsorter
@@ -7,8 +6,8 @@ from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from iblsorter.params import load_integration_config
 from viz import reports
 
-setup_logger('iblsorter', level='DEBUG')
 config = load_integration_config()
+setup_logger('iblsorter', level=config.log_level)
 override_params = {}
 label = ""
 
@@ -48,6 +47,5 @@ def run_integration_test(bin_file):
                              raw_plots=True, summary_stats=False, raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
                              vmax=0.05, d_bin=5, t_bin=0.001)
 
-
 if __name__ == "__main__":
-    run_integration_test(config.integration_data_path.joinpath('testing_input', 'integration_100s', 'imec_385_100s.ap.bin'))
+    run_integration_test(config.integration_data_path.joinpath('stand-alone', 'imec_385_100s.ap.bin'))
