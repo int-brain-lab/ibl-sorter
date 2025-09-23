@@ -6,7 +6,7 @@ h5py
 matplotlib
 mock
 numba
-numpy
+numpy >= 1.24
 ibllib >= 2.40.0
 ibl-neuropixel >= 1.8.1
 ipython

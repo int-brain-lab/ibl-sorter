@@ -11,8 +11,7 @@ from time import perf_counter
 from tqdm.auto import tqdm
 
 import numpy as np
-from numpy.lib.format import (
-    _check_version, _write_array_header, header_data_from_array_1_0, dtype_to_descr)
+from numpy.lib.format import write_array_header_1_0, header_data_from_array_1_0, dtype_to_descr
 import torch
 import cupy as cp
 
@@ -209,9 +208,7 @@ def save_large_array(fp, array, axis=0, desc=None):
     """Save a large, potentially memmapped array, into a NPY file, chunk by chunk to avoid loading
     it entirely in memory."""
     assert axis == 0  # TODO: support other axes
-    version = None
-    _check_version(version)
-    _write_array_header(fp, header_data_from_array_1_0(array), version)
+    write_array_header_1_0(fp, header_data_from_array_1_0(array))
     N = array.shape[axis]
     if N == 0:
         return
@@ -231,10 +228,8 @@ class NpyWriter(object):
         self.shape = shape
         self.dtype = np.dtype(dtype)
         header = _npy_header(self.shape, self.dtype)
-        version = None
-        _check_version(version)
         self.fp = open(path, 'wb')
-        _write_array_header(self.fp, header, version)
+        write_array_header_1_0(self.fp, header)
 
     def append(self, chunk):
         if chunk.ndim == len(self.shape):
