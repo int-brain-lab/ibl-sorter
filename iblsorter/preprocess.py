@@ -7,6 +7,7 @@ import scipy.stats
 import cupy as cp
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import iblsorter.qc
 from ibldsp.voltage import decompress_destripe_cbin, destripe, detect_bad_channels
@@ -233,9 +234,15 @@ def get_good_channels(raw_data, params, probe, t0s=None, return_labels=False, qc
         fig.savefig(Path(qc_path).joinpath('_iblqc_channel_detection.png'))
         plt.close(fig)
     if np.mean(channel_labels == 0) < 0.5:
-        raise RuntimeError(f"More than half of channels are considered bad. Verify your raw data and eventually update"
+        df = pd.DataFrame(xfeats)
+        df['label'] = channel_labels
+        str_error = f'\n{df.to_string()}\n{list(df.columns)}'
+        str_error += '\n 0:good, 1:dead, 2:noise, 3:outside of the brain \n'
+        str_error += f'params.channel_detection_parameters: \n {str(params.channel_detection_parameters)}'
+        raise RuntimeError(f"{str_error} \n"
+                           f"More than half of channels are considered bad. Verify your raw data and eventually update"
                            f"the channel_detection_parameters. \n"
-                           f"Check {Path(qc_path).joinpath('_iblqc_covariance_matrix.png')}"
+                           f"Check {Path(qc_path).joinpath('_iblqc_channel_detection.png')}"
                            f" and your data using `ibldsp.voltage.detect_bad_channels`")
     if return_labels:
         return channel_labels == 0, channel_labels

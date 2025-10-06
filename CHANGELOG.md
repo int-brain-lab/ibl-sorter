@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Added / Removed / Changed / Fixed
 
+### [UNRELEASED]
+
+### Added
+- In the case of more than 50% channels detected bad, print the dataframe of channel features for command-line inspection.
+
 ### [1.11.0] 2025-09-18
 
 ### Added
