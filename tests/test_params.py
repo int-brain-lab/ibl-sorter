@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 from iblsorter.params import MotionEstimationParams, KilosortParams
-from iblsorter.ibl import ibl_dredge_params
+
+def test_consistent_parameters():
+    pass
+
 
 def test_motion_params():
     # test modify params
@@ -43,9 +46,6 @@ def test_kilosort_params():
     assert p.ephys_reader_args == test_args
 
 def test_get_motion_params_from_kilosort_params():
-    k = KilosortParams()
-    p = ibl_dredge_params(k)
-    assert p.bin_s == p.gaussian_smoothing_sigma_s == k.NT / k.fs
-    assert p.mincorr == 0.5
-    
-    
+    params = KilosortParams(NT=10_000, fs=25_000)
+    assert params.motion_estimation_parameters.bin_s == params.motion_estimation_parameters.gaussian_smoothing_sigma_s == params.NT / params.fs
+    assert params.motion_estimation_parameters.mincorr == 0.5

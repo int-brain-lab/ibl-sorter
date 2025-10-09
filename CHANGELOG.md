@@ -11,6 +11,10 @@ Added / Removed / Changed / Fixed
 ### Added
 - In the case of more than 50% channels detected bad, print the dataframe of channel features for command-line inspection.
 
+### Fixed
+- When running on un-split multi-shank probes, dartsort takes into account shank-aware coordinates.
+
+
 ### [1.11.0] 2025-09-18
 
 ### Added

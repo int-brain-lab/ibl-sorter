@@ -122,8 +122,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     # construct the probe geometry information
     if params is None:
         params = ibl_pykilosort_params(bin_file)
-    if motion_params is None:
-        motion_params = ibl_dredge_params(params)
     try:
         _logger.info(f"Starting iblsorter version {__version__}")
         _logger.info(f"Scratch dir {scratch_dir}")
@@ -167,16 +165,6 @@ def ibl_pykilosort_params(bin_file):
     params.probe = probe_geometry(bin_file)
     return params
 
-
-def ibl_dredge_params(pyks_params):
-    # neuropixels 1/2 Dredge configs
-    motion_params = MotionEstimationParams(
-        bin_s=pyks_params.NT / pyks_params.fs,
-        gaussian_smoothing_sigma_s=pyks_params.NT / pyks_params.fs,
-        mincorr=0.5
-    )
-
-    return motion_params
 
 def probe_geometry(bin_file):
     """

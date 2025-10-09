@@ -9,7 +9,7 @@ else:
     import cupyx
 
 from .utils import Bunch, memmap_binary_file, read_data, load_probe, plot_dissimilarity_matrices, plot_diagnostics
-from .main import run, run_export, run_spikesort, run_preprocess
+from .main import run, run_export, run_spikesort
 from .io.probes import np1_probe, np2_probe, np2_4shank_probe
 
-__version__ = '1.11.0'
+__version__ = '1.11.1a'
