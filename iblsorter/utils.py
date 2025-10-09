@@ -24,8 +24,16 @@ logger = logging.getLogger(__name__)
 
 
 def cuda_installation_test():
-    cp.zeros(10) * 2
+    logger.info("Testing Torch CUDA installation...")
     assert torch.cuda.is_available()
+    logger.info("Torch CUDA available...")
+    logger.info("Testing Cupy library imports from Cuda...")
+    from cupy_backends.cuda.libs import cusolver
+    logger.info("Cupy CUDA available...")
+    logger.info("Testing Cupy library imports from Cuda...")
+    cp.zeros(10) * 2
+    logger.info("Cupy can allocate memory")
+    logger.info("Green light for all CUDA tests")
 
 
 def prod(iterable):

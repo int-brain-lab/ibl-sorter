@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import shutil
+import yaml
 
 import numpy as np
 
@@ -159,25 +160,29 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         extract_waveforms_after_sorting(bin_file, alf_path, scratch_dir)
 
 
-def ibl_pykilosort_params(bin_file):
-    params = KilosortParams()
+def ibl_pykilosort_params(bin_file=None, params=None, npx_version=1):
+    if bin_file and (param_file := bin_file.parent.joinpath('iblsorter_parameters.yaml')).exists():
+        # read in the param_file with yaml
+        with open(param_file, 'r') as fp:
+            params = yaml.safe_load(fp) | (params or {})
+    else:
+        params = params or {}
+    params = KilosortParams(**params)
     params.overlap_samples = 1024  # this needs to be a multiple of 1024
-    params.probe = probe_geometry(bin_file)
+    params.probe = probe_geometry(bin_file, npx_version=npx_version)
     return params
 
 
-def probe_geometry(bin_file):
+def probe_geometry(bin_file=None, npx_version=1):
     """
     Loads the geometry from the meta-data file of the spikeglx acquisition system
     sr: ibllib.io.spikeglx.Reader or integer with neuropixel version 1 or 2
     """
-    if isinstance(bin_file, str) or isinstance(bin_file, Path):
+    if bin_file is not None:
         sr = spikeglx.Reader(bin_file)
         h, ver, s2v = (sr.geometry, sr.major_version, sr.sample2volts[0])
     else:
-        print(bin_file)
-        assert(bin_file == 1 or bin_file == 2)
-        h, ver, s2v = (neuropixel.trace_header(version=bin_file), bin_file, 2.34375e-06)
+        h, ver, s2v = (neuropixel.trace_header(version=npx_version), npx_version, 2.34375e-06)
     nc = h['x'].size
     probe = Bunch()
     probe.NchanTOT = nc + 1

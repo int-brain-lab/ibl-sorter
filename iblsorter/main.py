@@ -48,7 +48,7 @@ def run(
     params = KilosortParams(**params or {})
     assert params
 
-    with open(Path(output_dir).joinpath('iblsort_parameters.yaml'), 'w') as f:
+    with open(Path(output_dir).joinpath('iblsorter_parameters.yaml'), 'w') as f:
         yaml.dump(params.model_dump(), f, default_flow_style=False)
 
     raw_data = spikeglx.Reader(dat_path) # params.ephys_reader_args

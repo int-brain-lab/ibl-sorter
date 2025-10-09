@@ -6,13 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Added / Removed / Changed / Fixed
 
-### [UNRELEASED]
+### [1.12.0] 2025-10-09
 
 ### Added
 - In the case of more than 50% channels detected bad, print the dataframe of channel features for command-line inspection.
+- Option to provide a parameter file in the same folder of the bin file to override defaults
+- Command line `iblsorter binfile.ap.bin --scratch_directory ~/scratch`
 
 ### Fixed
-- When running on un-split multi-shank probes, dartsort takes into account shank-aware coordinates.
+- When running on un-split multi-shank probes, dartsort takes into account shank-aware coordinates for NP2.4
 
 
 ### [1.11.0] 2025-09-18
