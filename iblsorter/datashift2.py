@@ -434,7 +434,7 @@ def dartsort_detector(ctx, probe, params):
     rec = si.read_binary(
         ctx.intermediate.proc_path, params.fs, params.data_dtype, probe.Nchan
     )
-    geom = np.c_[probe.x, probe.y]
+    geom = np.c_[probe.xc, probe.yc]
 
     rec.set_dummy_probe_from_locations(geom)
     rec = rec.astype("float32")

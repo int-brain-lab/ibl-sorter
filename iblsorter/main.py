@@ -1,6 +1,7 @@
 import logging
 import shutil
 from pathlib import Path, PurePath
+import yaml
 
 import numpy as np
 
@@ -29,7 +30,6 @@ def run(
     probe=None,
     stop_after=None,
     clear_context=False,
-    motion_params=None,
     **params,
 ):
     """Launch KiloSort 2.
@@ -48,8 +48,8 @@ def run(
     params = KilosortParams(**params or {})
     assert params
 
-    # motion params
-    motion_params = motion_params or MotionEstimationParams()
+    with open(Path(output_dir).joinpath('iblsorter_parameters.yaml'), 'w') as f:
+        yaml.dump(params.model_dump(), f, default_flow_style=False)
 
     raw_data = spikeglx.Reader(dat_path) # params.ephys_reader_args
     assert probe
@@ -76,7 +76,7 @@ def run(
 
     ctx = Context(ctx_path)
     ctx.params = params
-    ctx.motion_params = motion_params
+    ctx.motion_params = params.motion_estimation_parameters
     ctx.probe = probe
     ctx.raw_probe = copy_bunch(probe)
     ctx.raw_data = raw_data
@@ -291,63 +291,8 @@ def run(
 
     # Show timing information.
     ctx.show_timer()
-
     #TODO:
     # Add optional deletion of temp files
-
-
-# TODO: use these in the actual main function
-def run_preprocess(ctx):
-    params = ctx.params
-    raw_data = ctx.raw_data
-    probe = ctx.probe
-    ir = ctx.intermediate
-
-    ir.Nbatch = get_Nbatch(raw_data, params)
-
-    if params.minfr_goodchannels > 0:  # discard channels that have very few spikes
-        # determine bad channels
-        with ctx.time("good_channels"):
-            ir.igood = get_good_channels(raw_data=raw_data, probe=probe, params=params)
-        # Cache the result.
-        ctx.write(igood=ir.igood)
-
-        # it's enough to remove bad channels from the channel map, which treats them
-        # as if they are dead
-        ir.igood = ir.igood.ravel()
-        probe.chanMap = probe.chanMap[ir.igood]
-        probe.xc = probe.xc[ir.igood]  # removes coordinates of bad channels
-        probe.yc = probe.yc[ir.igood]
-        probe.kcoords = probe.kcoords[ir.igood]
-
-    probe.Nchan = len(
-        probe.chanMap
-    )  # total number of good channels that we will spike sort
-    assert probe.Nchan > 0
-
-    # upper bound on the number of templates we can have
-    params.Nfilt = params.nfilt_factor * probe.Nchan
-
-    # -------------------------------------------------------------------------
-    # Find the whitening matrix.
-    with ctx.time("whitening_matrix"):
-        ir.Wrot = get_whitening_matrix(raw_data=raw_data, probe=probe, params=params)
-    # Cache the result.
-    ctx.write(Wrot=ir.Wrot)
-
-    # -------------------------------------------------------------------------
-    # Preprocess data to create proc.dat
-    ir.proc_path = ctx.path("proc", ".dat")
-    if not ir.proc_path.exists():
-        # Do not preprocess again if the proc.dat file already exists.
-        with ctx.time("preprocess"):
-            preprocess(ctx)
-
-    # Show timing information.
-    ctx.show_timer()
-    ctx.write(timer=ctx.timer)
-
-    return ctx
 
 
 def run_spikesort(ctx, sanity_plots=True, plot_widgets=None):

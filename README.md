@@ -6,39 +6,20 @@ The clustering part is based on the original MATLAB version of [Kilosort 2.5](ht
 ## Usage
 
 We provide a few datasets to explore parametrization and test on several brain regions.
-The smallest dataset is a 100 seconds excerpt to test the installation. Here is the minimal working example:
+The smallest dataset is a 100 seconds excerpt to test the installation. You can see the download instructions [Here](./integration/README.md)
 
-```python
-import shutil
-from pathlib import Path
+1) if you want to override default parameters, copy the [](./iblsorter/examples/iblsorter_parameters.yaml) in the same folder as your raw binary file and edit its values
+2) make sure you have a scratch directory with > 200 Gb of disk space to write temporary data
+3) run the command `iblsorter /path/to/raw_data_file.bin --scratch_directory /path/to/scratch`
 
-from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params, download_test_data
 
-if __name__ == "__main__":
-    data_path = Path("/mnt/s0/spike_sorting/integration_tests")  # path on which the raw data will be downloaded
-    scratch_dir = Path.home().joinpath("scratch",
-                                    'iblsorter')  # temporary path on which intermediate raw data will be written, we highly recommend a SSD drive
-    ks_output_dir = Path("/mnt/s0/spike_sorting/outputs")  # path containing the kilosort output unprocessed
-    alf_path = ks_output_dir.joinpath(
-        'alf')  # this is the output standardized as per IBL standards (SI units, ALF convention)
-
-    # download the integration test data from amazon s3 bucket
-    bin_file, meta_file = download_test_data(data_path)
-
-    # prepare and mop up folder architecture for consecutive runs
-    DELETE = True  # delete the intermediate run products, if False they'll be copied over to the output directory for debugging
-    shutil.rmtree(scratch_dir, ignore_errors=True)
-    scratch_dir.mkdir(exist_ok=True)
-    ks_output_dir.mkdir(parents=True, exist_ok=True)
-
-    # loads parameters and run
-    params = ibl_pykilosort_params(bin_file)
-    params['Th'] = [6, 3]
-
-    run_spike_sorting_ibl(bin_file, delete=DELETE, scratch_dir=scratch_dir,
-                            ks_output_dir=ks_output_dir, alf_path=alf_path, log_level='INFO', params=params)
+```shell
+SCRATCH_DIR=~/scratch  # SSD drive with > 200Gb space to write temporary data
+INPUT_FILE=/datadisk/Data/spike-sorting/integration-tests/stand-alone/imec_385_100s.ap.bin
+iblsorter $INPUT_FILE --scratch_directory $SCRATCH_DIR
 ```
 
+Additionally, `iblsorter --help` will display additional command options.
 
 ## Installation 
 

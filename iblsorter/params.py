@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple, Literal
 import yaml
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator, DirectoryPath
+from pydantic import BaseModel, Field, field_validator, DirectoryPath, model_validator
 
 import iblsorter
 
@@ -80,24 +80,24 @@ class MotionEstimationParams(BaseModel):
     See https://github.com/evarol/dredge/blob/main/python/dredge/dredge_ap.py
     """
 
-    bin_um: float = Field(1.0)
-    bin_s: float = Field(1.0)
+    bin_um: float = Field(1.0, description="The size of the bins along depth in microns. The returned object's displacement array will respect these bins. Increasing these can lead to more stable estimates and faster runtimes at the cost of spatial resolution.")
+    bin_s: float | None = Field(None, description="The size of the time bin in seconds. The returned object's displacement array will respect these bins. Increasing these can lead to more stable estimates and faster runtimes at the cost of temporal resolution.")
     
-    max_dt_s: float = Field(1000.)
-    mincorr: float = Field(0.1)
+    max_dt_s: float = Field(1000., description="Time horizon parameter, in seconds. Time bins separated by more seconds than this will not be cross-correlated. So, if your data has nonstationarities or changes which could lead to bad cross-correlations at some timescale, it can help to input that value here. If this is too small, it can make the motion estimation unstable.")
+    mincorr: float = Field(0.5, description="Correlation threshold. Pairs of frames whose maximal cross correlation value is smaller than this threshold will be ignored when solving for the global displacement estimate.")
 
-    win_shape: str = Field("gaussian")
-    win_step_um: float = Field(400.)
-    win_scale_um: float = Field(450.)
+    win_shape: str = Field("gaussian", description="Nonrigid window shape")
+    win_step_um: float = Field(400., description='Spacing between nonrigid window centers in microns')
+    win_scale_um: float = Field(450., description='Controls the width of nonrigid windows centers')
 
     # default depends on other parameters
-    max_disp_um: float | None = Field(None, description="", validate_default=True) 
+    max_disp_um: float | None = Field(None, description='Maximum possible displacement in microns. If you can guess a number which is larger than the largest displacement possible in your recording across a span of `max_dt_s` seconds, setting this value to that number can stabilize the result and speed up the algorithm (since it can do less cross-correlating). By default, this is set to win-scale_um / 4, or 112.5 microns. Which can be a bit large!', validate_default=True)
     @field_validator("max_disp_um")
     def set_max_disp_um(cls, v, values):
         return v or values.data["win_scale_um"] / 4.
 
     # default depends on other parameters
-    win_margin_um: float | None = Field(None, description="", validate_default=True)  ## -win_scale_um / 2
+    win_margin_um: float | None = Field(None, validate_default=True, description="Distance of nonrigid windows centers from the probe boundary (-1000 means there will be no window center within 1000um of the edge of the probe)")
     @field_validator("win_margin_um")
     def set_win_margin_um(cls, v, values):
         return v or -values.data["win_scale_um"] / 2.
@@ -112,8 +112,8 @@ class MotionEstimationParams(BaseModel):
     # raster parameters
     # amp_scale_fn=None,
     # post_transform=np.log1p,
-    gaussian_smoothing_sigma_um: float = Field(1)
-    gaussian_smoothing_sigma_s: float = Field(1)
+    gaussian_smoothing_sigma_um: float = Field(1.0)
+    gaussian_smoothing_sigma_s: float | None = Field(None)
     avg_in_bin: bool = Field(False)
     count_masked_correlation: bool = Field(False)
     count_bins: int = Field(401)
@@ -132,6 +132,8 @@ class KilosortParams(BaseModel):
     ThPre: float = Field(8, description="threshold crossings for pre-clustering (in PCA projection space)",)
     channel_detection_parameters: Optional[ChannelDetectionParams] = Field(
         ChannelDetectionParams(), description='parameters for raw correlation channel detection option')
+    motion_estimation_parameters: Optional[MotionEstimationParams] = Field(
+        MotionEstimationParams(), description="parameters for DREDGE motion estimation")
     data_dtype: str = Field('int16', description='data type of raw data')
     datashift: Optional[DatashiftParams] = Field(None, description="parameters for 'datashift' drift correction. not required")
     deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
@@ -206,3 +208,11 @@ class KilosortParams(BaseModel):
         if self.read_only:
             args['mode'] = 'r'
         return args
+
+    @model_validator(mode='after')
+    def set_dredge_params(self):
+        if self.motion_estimation_parameters.bin_s is None:
+            self.motion_estimation_parameters.bin_s = self.NT / self.fs
+        if self.motion_estimation_parameters.gaussian_smoothing_sigma_s is None:
+            self.motion_estimation_parameters.gaussian_smoothing_sigma_s = self.NT / self.fs
+        return self

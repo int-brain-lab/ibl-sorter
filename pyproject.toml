@@ -40,3 +40,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "requires_gpu: Tests requires cupy (with gpu & CUDA). Tests that seem pointless without a GPU but still work should *not* use this.",
 ]
+
+[project.scripts]
+iblsorter = "iblsorter.examples.run_single_recording:main"
+iblsorter-ibltask = "iblsorter.examples.run_ibl_recording:main"

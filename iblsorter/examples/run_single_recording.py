@@ -7,14 +7,12 @@ from iblsorter.ibl import run_spike_sorting_ibl, ibl_pykilosort_params
 from iblutil.util import setup_logger
 
 SCRATCH_DIR = Path.home().joinpath('scratch', 'iblsorter')
-override_params = {}  # here it is possible to set some parameters for the run
 
 
 class CommandLineArguments(BaseSettings, cli_parse_args=True):
     recording_file: CliPositionalArg[FilePath] = Field(description='The full path file of the AP recording')
-    output_directory: CliPositionalArg[Path] = Field(description='The full path to the output directory')
-    scratch_directory: Path = Field(description='Raw Data Directory', default=SCRATCH_DIR)
-
+    output_directory: CliPositionalArg[Path | None] = Field(description='The full path to the output directory (defaults to the AP bin file directory)', default=None)
+    scratch_directory: Path = Field(description='Raw Data Directory (defaults to ~/scratch/iblsorter)', default=SCRATCH_DIR)
 
 
 def spike_sort_recording(bin_file, output_dir, scratch_dir):
@@ -26,7 +24,7 @@ def spike_sort_recording(bin_file, output_dir, scratch_dir):
     :param bin_file:
     """
     bin_file = Path(bin_file)
-    output_dir = Path(output_dir)
+    output_dir = Path(output_dir) if output_dir is not None else bin_file.parent
 
     ks_output_dir = output_dir.joinpath('iblsorter')
     alf_path = output_dir.joinpath('alf')
@@ -38,15 +36,16 @@ def spike_sort_recording(bin_file, output_dir, scratch_dir):
     ks_output_dir.mkdir(parents=True, exist_ok=True)
 
     params = ibl_pykilosort_params(bin_file)
-    for k in override_params:
-        params[k] = override_params[k]
 
     run_spike_sorting_ibl(bin_file, scratch_dir=scratch_dir, params=params,
                           ks_output_dir=ks_output_dir, alf_path=alf_path)
 
-
-if __name__ == "__main__":
-    # ['run_single_recording.py', '/mnt/ap.bin', '/home/output', '--scratch_directory','/mnt/scratch/iblsorter']
+def main():
     setup_logger(name='iblsorter', level='INFO')
     args = CommandLineArguments().model_dump()
     spike_sort_recording(bin_file=args['recording_file'], output_dir=args['output_directory'], scratch_dir=args['scratch_directory'])
+
+
+if __name__ == "__main__":
+    # ['run_single_recording.py', '/mnt/ap.bin', '/home/output', '--scratch_directory','/mnt/scratch/iblsorter']
+    main()

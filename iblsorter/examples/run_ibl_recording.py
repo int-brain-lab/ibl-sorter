@@ -32,8 +32,7 @@ class CommandLineArguments(BaseSettings, cli_parse_args=True):
     cache_dir: DirectoryPath | None = Field(description='The full path to the ONE cache directory', default=None)
     scratch_dir: DirectoryPath | None = Field(description='The full path to the SSD scratch', default=SCRATCH_DIR)
 
-
-if __name__ == "__main__":
+def main():
     args = CommandLineArguments()
     one = ONE(base_url='https://alyx.internationalbrainlab.org', cache_dir=args.cache_dir)
     eid, pname = one.pid2eid(args.pid)
@@ -53,3 +52,7 @@ if __name__ == "__main__":
         for f in session_path.joinpath('raw_ephys_data', pname).glob('*.ap.*bin'):
             print(f'Removing raw data: {f}')
             f.unlink()
+
+
+if __name__ == "__main__":
+    main()

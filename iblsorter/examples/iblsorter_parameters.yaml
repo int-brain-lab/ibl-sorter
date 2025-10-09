@@ -1,0 +1,84 @@
+AUCsplit: 0.9
+Nfilt: null
+Th:
+- 6
+- 3
+ThPre: 8
+channel_detection_parameters:
+  psd_hf_threshold: 0.02
+  similarity_threshold: !!python/tuple
+  - -0.5
+  - 1
+data_dtype: int16
+datashift: null
+deterministic_mode: true
+fs: 30000.0
+fshigh: 300.0
+fslow: null
+gain: 1
+genericSpkTh: 8.0
+lam: 10
+loc_range:
+- 5
+- 4
+long_range:
+- 30
+- 6
+low_memory: false
+minFR: 0.02
+minfr_goodchannels: 0
+momentum:
+- 20
+- 400
+motion_estimation_parameters:
+  avg_in_bin: false
+  bin_s: null
+  bin_um: 1.0
+  count_bin_min: 2
+  count_bins: 401
+  count_masked_correlation: false
+  do_window_weights: true
+  gaussian_smoothing_sigma_s: null
+  gaussian_smoothing_sigma_um: 1
+  max_disp_um: 112.5
+  max_dt_s: 1000.0
+  mincorr: 0.5
+  mincorr_percentile: null
+  mincorr_percentile_nneighbs: null
+  weights_threshold_high: 0.2
+  weights_threshold_low: 0.2
+  win_margin_um: -225.0
+  win_scale_um: 450.0
+  win_shape: gaussian
+  win_step_um: 400.0
+nPCs: 3
+nSkipCov: 25
+n_channels: 385
+nblocks: 5
+nfilt_factor: 4
+normalisation: whitening
+nskip: 5
+nt0: 61
+ntbuff: 64
+nup: 10
+output_filename: null
+overlap_samples: 0
+overwrite: true
+perform_drift_registration: true
+probe: null
+read_only: false
+reorder: true
+save_drift_estimates: false
+save_drift_spike_detections: false
+save_temp_files: true
+scaleproc: 200
+seed: 42
+sig: 1
+sig_datashift: 20.0
+sigmaMask: 30
+skip_preprocessing: false
+spkTh: -6
+stable_mode: true
+templateScaling: 20.0
+unwhiten_before_drift: true
+whiteningRange: 32
