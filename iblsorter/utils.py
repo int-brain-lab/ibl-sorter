@@ -30,10 +30,10 @@ def cuda_installation_test():
     logger.info("Testing Cupy library imports from Cuda...")
     from cupy_backends.cuda.libs import cusolver
     logger.info("Cupy CUDA available...")
-    logger.info("Testing Cupy library imports from Cuda...")
     cp.zeros(10) * 2
     logger.info("Cupy can allocate memory")
-    logger.info("Green light for all CUDA tests")
+    logger.info("Green light: all CUDA tests pass")
+    print("Green light: all CUDA tests pass")
 
 
 def prod(iterable):

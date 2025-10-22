@@ -44,3 +44,4 @@ markers = [
 [project.scripts]
 iblsorter = "iblsorter.examples.run_single_recording:main"
 iblsorter-ibltask = "iblsorter.examples.run_ibl_recording:main"
+iblsorter-test = "iblsorter.utils:cuda_installation_test"

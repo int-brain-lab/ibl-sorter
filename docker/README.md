@@ -3,19 +3,25 @@
 ## Usage
 
 The command to run a PID is the following:
+TODO: env_file + docker compose
+TODO: iblsorter --version
+TODO: set the scratch dir inside the docker to home so that the argument is not necessary
+
 ```shell
-cd /home/olivier/PycharmProjects/pykilosort/ibl-sorter/docker
-BINFILE=/mnt/s1/spikesorting/integration_tests/testing_input/integration_100s/imec_385_100s.ap.bin
+
+SCRATCH_DIR=/home/rlab/scratch
+DATA_PATH=/mnt/disk2/Naz/Ephys/test5_g0_imec0
+DATA_FILE=test5_g0_t0.imec0.ap.bin 
 
 docker run \
+  -it \
   --rm \
+  --gpus=all \
   --name spikesorter \
-  --gpus 1 \
-  -v /mnt/s1:/mnt/s1 \
-  -v /home/$USER/.one:/root/.one \
-  -v /mnt/h1:/scratch \
-  internationalbrainlab/iblsorter:latest \
-  python /root/Documents/PYTHON/ibl-sorter/examples/run_single_recording.py $BINFILE  /mnt/h1/iblsorter_integration --scratch_directory /scratch
+  -v $DATA_PATH:/mnt/s0 \
+  -v $SCRATCH_DIR:/scratch \
+  internationalbrainlab/iblsorter:1.12 \
+  iblsorter /mnt/s0/$DATA_FILE --scratch_directory /scratch
 ```
  
 For IBL users, the command to run spike sorting for a registered PID is the following:
