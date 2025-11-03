@@ -1,5 +1,7 @@
 from pathlib import Path
 import datetime
+import importlib.metadata
+import sys
 import json
 import logging
 import shutil
@@ -129,7 +131,15 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         _logger.info(f"Output dir {ks_output_dir}")
         _logger.info(f"Data dir {bin_file.parent}")
         _logger.info(f"Log file {log_file}")
+        _logger.info("Python executable: %s", sys.executable)
+        _logger.info("Python version: %s", sys.version)
+        packages = sorted([f"{dist.metadata['name']}=={dist.version}"
+                           for dist in importlib.metadata.distributions()])
+        _logger.info("Installed packages:\n---\n%s\n---", '\n'.join(packages))
+
+
         _logger.info(f"Loaded probe geometry for NP{params.probe.neuropixel_version}")
+
 
         run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir,
             stop_after=stop_after, motion_params=motion_params, **dict(params))
