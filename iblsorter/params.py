@@ -4,14 +4,14 @@ from typing import List, Optional, Tuple, Literal
 import yaml
 
 import numpy as np
-from pydantic import BaseModel, Field, field_validator, DirectoryPath, model_validator
+from pydantic import BaseModel, Field, field_validator, DirectoryPath, model_validator, NewPath
 
 import iblsorter
 
 
 class IntegrationConfig(BaseModel):
     integration_data_path: DirectoryPath
-    scratch_dir: DirectoryPath
+    scratch_dir: DirectoryPath | NewPath
     delete: bool
     log_level: Literal['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL'] = 'INFO'
 
