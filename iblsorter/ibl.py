@@ -116,7 +116,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     assert scratch_dir is not None
     START_TIME = datetime.datetime.now()
     log_file = scratch_dir.joinpath(f"_{START_TIME.isoformat().replace(':', '')}_iblsorter.log")
-    log_to_file(_logger, filename=log_file)
+    _logger = log_to_file('iblsorter', filename=log_file)
     # handles all the path
     bin_file = _get_multi_parts_records(bin_file)
     scratch_dir.mkdir(exist_ok=True, parents=True)

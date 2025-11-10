@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Added / Removed / Changed / Fixed
 
 ### [UNRELEASED]
-- print environment into logfile. 
+
+### Fixed
+- logging to file uses the level defined by user, and by default INFO
+
+### Added
+- print environment into logfile.
+- `iblsorter_parameters.yaml` is a new output file containing run parameters
 
 ### [1.12.0] 2025-10-09
 

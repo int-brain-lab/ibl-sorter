@@ -8,10 +8,10 @@ mock
 numba
 numpy >= 1.24
 ibllib >= 2.40.0
-ibl-neuropixel >= 1.9.0
+ibl-neuropixel >= 1.9.1
 ipython
 pandas
-phylib >= 2.5.0
+phylib >= 2.6.3
 pydantic
 pydantic-settings
 pyfftw
