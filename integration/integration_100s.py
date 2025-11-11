@@ -7,7 +7,8 @@ from iblsorter.params import load_integration_config
 from viz import reports
 
 config = load_integration_config()
-setup_logger('iblsorter', level=config.log_level)
+_logger = setup_logger('iblsorter', level=config.log_level)
+_logger.info(config)
 override_params = {}
 label = ""
 
@@ -35,6 +36,7 @@ def run_integration_test(bin_file):
 
     run_spike_sorting_ibl(bin_file, delete=config.delete, scratch_dir=config.scratch_dir, params=params,
                           ks_output_dir=ks_output_dir, alf_path=alf_path)
+    _logger.info(f"Completed {bin_file} with parameters: {params}")
     # we copy the temporary files to the output directory if we want to investigate them
     if not config.delete:
         working_directory = config.scratch_dir.joinpath('.kilosort', bin_file.stem)
