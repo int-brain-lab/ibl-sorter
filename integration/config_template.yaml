@@ -2,3 +2,4 @@ integration_data_path: /datadisk/Data/neuropixel/integration_tests
 scratch_dir: /home/olivier/scratch/ibl-sorter
 delete: true
 log_level: DEBUG
+report: true  # set to false if running in a non-interactive environment

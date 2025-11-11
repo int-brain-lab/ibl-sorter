@@ -14,6 +14,7 @@ class IntegrationConfig(BaseModel):
     scratch_dir: DirectoryPath | NewPath
     delete: bool
     log_level: Literal['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL'] = 'INFO'
+    report: bool
 
 
 def load_integration_config(yaml_path=None) -> IntegrationConfig:

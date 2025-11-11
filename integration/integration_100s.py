@@ -43,9 +43,10 @@ def run_integration_test(bin_file):
         intermediate_directory.mkdir(exist_ok=True)
         shutil.copy(pre_proc_file, intermediate_directory)
 
-    reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, out_path=output_dir, raster_plot=True,
-                             raw_plots=True, summary_stats=False, raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
-                             vmax=0.05, d_bin=5, t_bin=0.001)
+    if config.report:
+        reports.qc_plots_metrics(bin_file=bin_file, pykilosort_path=alf_path, out_path=output_dir, raster_plot=True,
+                                 raw_plots=True, summary_stats=False, raster_start=0., raster_len=100., raw_start=50., raw_len=0.15,
+                                 vmax=0.05, d_bin=5, t_bin=0.001)
 
 if __name__ == "__main__":
     run_integration_test(config.integration_data_path.joinpath('stand-alone', 'imec_385_100s.ap.bin'))
