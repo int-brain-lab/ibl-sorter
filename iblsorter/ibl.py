@@ -160,8 +160,6 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         # move all of the QC outputs to the alf folder as well
         for qc_file in scratch_dir.rglob('_iblqc_*.png'):
             shutil.move(qc_file, alf_path.joinpath(qc_file.name))
-        for qc_file in scratch_dir.rglob('_iblqc_*.png'):
-            shutil.move(qc_file, alf_path.joinpath(qc_file.name))
     # in production, we remove all of the temporary files after the run
     if delete:
         shutil.rmtree(scratch_dir.joinpath(".kilosort"), ignore_errors=True)

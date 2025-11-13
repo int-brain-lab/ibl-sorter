@@ -22,6 +22,7 @@ override_params = {}
 
 if __name__ == "__main__":
     # Define path to the test input data
+    config.scratch_dir.mkdir(parents=True, exist_ok=True)
     path_probe = config.integration_data_path.joinpath('ibl', 'probe01')
     
     # Define output directory with version-specific subfolder
