@@ -74,24 +74,25 @@ if __name__ == "__main__":
     
     # Define path to the ALF output directory (ALF = ALyx Lightweight Format)
     alf_path = session_path.joinpath('alf', 'probe01', 'iblsorter')
-    
-    # Generate quality control plots and metrics
-    reports.qc_plots_metrics(
-        # Find the binary compressed file (.cbin) in the raw data directory
-        bin_file=next(raw_ephys_data_path.glob('*.ap.cbin')), 
-        pykilosort_path=alf_path, 
-        out_path=output_dir, 
-        raster_plot=True,           # Generate spike raster plots
-        raw_plots=True,             # Generate raw data plots
-        summary_stats=False,        # Skip summary statistics
-        raster_start=0.,            # Start time for raster plot (seconds)
-        raster_len=100.,            # Duration for raster plot (seconds)
-        raw_start=50.,              # Start time for raw data plot (seconds)
-        raw_len=0.15,               # Duration for raw data plot (seconds)
-        vmax=0.05,                  # Maximum value for color scaling
-        d_bin=5,                    # Depth bin size
-        t_bin=0.001                 # Time bin size (1 ms)
-    )
+
+    if config.report:
+        # Generate quality control plots and metrics
+        reports.qc_plots_metrics(
+            # Find the binary compressed file (.cbin) in the raw data directory
+            bin_file=next(raw_ephys_data_path.glob('*.ap.cbin')),
+            pykilosort_path=alf_path,
+            out_path=output_dir,
+            raster_plot=True,           # Generate spike raster plots
+            raw_plots=True,             # Generate raw data plots
+            summary_stats=False,        # Skip summary statistics
+            raster_start=0.,            # Start time for raster plot (seconds)
+            raster_len=100.,            # Duration for raster plot (seconds)
+            raw_start=50.,              # Start time for raw data plot (seconds)
+            raw_len=0.15,               # Duration for raw data plot (seconds)
+            vmax=0.05,                  # Maximum value for color scaling
+            d_bin=5,                    # Depth bin size
+            t_bin=0.001                 # Time bin size (1 ms)
+        )
     
     # Clean up the raw data copy to save disk space
     logger.info("Remove raw data copy")
