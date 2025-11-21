@@ -7,8 +7,8 @@ It copies test data to a temporary location, runs the spike sorting process,
 validates the outputs, and generates quality control reports.
 """
 import shutil
+import logging
 
-from iblutil.util import setup_logger
 from ibllib.pipes.ephys_tasks import SpikeSorting
 
 from viz import reports
@@ -16,7 +16,8 @@ import iblsorter
 from iblsorter.params import load_integration_config
 
 config = load_integration_config()
-logger = setup_logger('iblsorter', level=config.log_level)
+logger = logging.getLogger('iblsorter')
+
 # Dictionary for any parameter overrides (empty in this case)
 override_params = {}
 

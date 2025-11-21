@@ -136,11 +136,7 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
         packages = sorted([f"{dist.metadata['name']}=={dist.version}"
                            for dist in importlib.metadata.distributions()])
         _logger.info("Installed packages:\n---\n%s\n---", '\n'.join(packages))
-
-
         _logger.info(f"Loaded probe geometry for NP{params.probe.neuropixel_version}")
-
-
         run(dat_path=bin_file, dir_path=scratch_dir, output_dir=ks_output_dir,
             stop_after=stop_after, motion_params=motion_params, **dict(params))
     except Exception as e:
@@ -149,6 +145,8 @@ def run_spike_sorting_ibl(bin_file, scratch_dir=None, delete=True,
     # removes the file handler of the logger
     for h in _logger.handlers:
         if isinstance(h, logging.FileHandler) and Path(h.baseFilename) == log_file:
+            _logger.info(f"Closing log file {log_file}")
+            h.close()
             _logger.removeHandler(h)
     # move the log file and all qcs to the output folder
     shutil.move(log_file, ks_output_dir.joinpath('_ibl_log.info_iblsorter.log'))
