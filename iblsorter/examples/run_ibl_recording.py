@@ -32,11 +32,13 @@ class CommandLineArguments(BaseSettings, cli_parse_args=True):
     cache_dir: DirectoryPath | None = Field(description='The full path to the ONE cache directory', default=None)
     scratch_dir: DirectoryPath | None = Field(description='The full path to the SSD scratch', default=SCRATCH_DIR)
 
+
 def main():
     args = CommandLineArguments()
     one = ONE(base_url='https://alyx.internationalbrainlab.org', cache_dir=args.cache_dir)
     eid, pname = one.pid2eid(args.pid)
     session_path = one.eid2path(eid)
+    print(session_path)
     sync_job = EphysPulses(session_path, one=one, pname=pname, sync_collection='raw_ephys_data/probe00', location="EC2", on_error='raise')
     sync_job.run()
     ssjob = SpikeSorting(session_path, one=one, pname=pname, device_collection='raw_ephys_data', location="EC2", on_error='raise',
