@@ -39,14 +39,11 @@ def main():
     eid, pname = one.pid2eid(args.pid)
     session_path = one.eid2path(eid)
     print(session_path)
-    sync_job = EphysPulses(session_path, one=one, pname=pname, sync_collection='raw_ephys_data/probe00', location="EC2", on_error='raise')
-    sync_job.run()
     ssjob = SpikeSorting(session_path, one=one, pname=pname, device_collection='raw_ephys_data', location="EC2", on_error='raise',
                          scratch_folder=args.scratch_dir)
     ssjob.run()
     lab_name = session_path.parts[-5]
     ssjob.register_datasets(labs=lab_name, force=True)
-    sync_job.register_datasets(labs=lab_name, force=True)
     if REMOVE_DATA:
         dir_sorter = session_path.joinpath('spike_sorters', 'iblsorter', pname)
         print(f'Removing sorter directory: {dir_sorter}')
