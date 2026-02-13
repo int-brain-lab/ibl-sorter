@@ -42,15 +42,15 @@ Navigate to the desired location for the repository and clone it
 
 Installation for cuda 11.x
 
-    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-    pip install cupy-cuda11x
-    pip install -e .
+    uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    uv pip install cupy-cuda11x
+    uv pip install -e .
 
 Installation for cuda 12.x (as of October 2024, check installation instructions from pytorch for the latest)
 
-    pip3 install torch torchvision torchaudio
-    pip install cupy-cuda12x
-    pip install -e .
+    uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+    uv pip install cupy-cuda12x
+    uv pip install -e .
 
 ### Making sure the installation is successful and CUDA is available
 
