@@ -466,7 +466,11 @@ def dartsort_detector(ctx, probe, params):
         std = np.median(stds, axis=0)
         mu = np.median(mus, axis=0)
     
+        valid = (probe.channel_labels == 0) & np.isfinite(std) & (std > 1e-6)
+        std[~valid] = 1
         W[idx] /= std[oob]
+        W[:, ~valid] = 0
+        mu[~valid] = 0
     
         rec = si.whiten(rec, W=W, M=mu, apply_mean=True)
 
