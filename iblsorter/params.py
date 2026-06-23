@@ -137,12 +137,16 @@ class DestripeParams(BaseModel):
         ),
     )
     k_filter: Optional[bool] = Field(
-        False,
+        True,
         description="Spatial filter applied after butterworth: True applies k-filter, False applies CAR, None skips spatial filtering",
     )
     k_kwargs: Optional[dict] = Field(
-        None,
-        description="Arguments for the kfilter function (ntr_pad, ntr_tap, lagc, butter_kwargs, epsilon). ibldsp defaults are used when None.",
+        default_factory=lambda: {'ntr_pad': 60, 'ntr_tap': 0, 'lagc': 3000, 'butter_kwargs':
+            {'N': 3, 'Wn': 0.01, 'btype': 'highpass'}, 'epsilon': None},
+        description=(
+            "Arguments for ibldsp.voltage.kfilt (ntr_pad, ntr_tap, lagc, butter_kwargs, epsilon). "
+            "Defaults are pinned here to be resilient to upstream changes in ibldsp."
+        ),
     )
 
 

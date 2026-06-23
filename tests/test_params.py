@@ -87,8 +87,8 @@ def test_get_motion_params_from_kilosort_params():
 
 def test_destripe_params_defaults():
     p = DestripeParams()
-    assert p.k_filter is False  # CAR is the default
-    assert p.k_kwargs is None
+    assert p.k_filter is True  # k-filter is the default
+    assert p.k_kwargs == {'ntr_pad': 60, 'ntr_tap': 0, 'lagc': 3000, 'butter_kwargs': {'N': 3, 'Wn': 0.01, 'btype': 'highpass'}, 'epsilon': None}
     assert p.butter_kwargs is None
 
 
