@@ -126,6 +126,26 @@ class ChannelDetectionParams(BaseModel):
     similarity_threshold: Optional[Tuple[float]] = Field((-.5, 1), description="similarity threshold for channel detection")
 
 
+class DestripeParams(BaseModel):
+    """Parameters forwarded to ibldsp.voltage.decompress_destripe_cbin."""
+    butter_kwargs: Optional[dict] = Field(
+        None,
+        description=(
+            "Butterworth temporal filter parameters passed to scipy.signal.butter "
+            "(keys: N, Wn, btype, and optionally fs). "
+            "If None, built from fshigh/fslow in KilosortParams."
+        ),
+    )
+    k_filter: Optional[bool] = Field(
+        True,
+        description="Spatial filter applied after butterworth: True applies k-filter, False applies CAR, None skips spatial filtering",
+    )
+    k_kwargs: Optional[dict] = Field(
+        None,
+        description="Arguments for the kfilter function (ntr_pad, ntr_tap, lagc, butter_kwargs, epsilon). ibldsp defaults are used when None.",
+    )
+
+
 class KilosortParams(BaseModel):
     AUCsplit: float = Field(0.9, description="""splitting a cluster at the end requires at least this much isolation for each sub-cluster (max=1)""")
     Nfilt: Optional[int] = None  # This should be a computed property once we add the probe to the config
@@ -137,6 +157,9 @@ class KilosortParams(BaseModel):
         MotionEstimationParams(), description="parameters for DREDGE motion estimation")
     data_dtype: str = Field('int16', description='data type of raw data')
     datashift: Optional[DatashiftParams] = Field(None, description="parameters for 'datashift' drift correction. not required")
+    destripe_parameters: Optional[DestripeParams] = Field(
+        DestripeParams(), description="parameters for the IBL destriping preprocessing step"
+    )
     deterministic_mode: bool = Field(True, description="make output deterministic by sorting spikes before applying kernels")
     fs: float = Field(30000.0, description="sample rate")
     fshigh: float = Field(300.0, description="high pass filter frequency")

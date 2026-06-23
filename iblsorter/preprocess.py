@@ -276,10 +276,17 @@ def destriping(ctx):
     wrot = cp.asnumpy(ir.Wrot)
     # get the bad channels
     # detect_bad_channels_cbin
+    dp = ctx.params.destripe_parameters
+    if dp.butter_kwargs is not None:
+        butter_kwargs = {**dp.butter_kwargs, 'fs': ctx.params.fs}
+    else:
+        butter_kwargs = get_butter_kwargs(ctx.params)
     kwargs = dict(output_file=ir.proc_path, wrot=wrot, nc_out=probe.Nchan, h=probe.h,
-                  butter_kwargs=get_butter_kwargs(ctx.params),
+                  butter_kwargs=butter_kwargs,
                   output_qc_path=ctx.output_qc_path,
-                  reject_channels=ctx.probe.channel_labels
+                  reject_channels=ctx.probe.channel_labels,
+                  k_filter=dp.k_filter,
+                  k_kwargs=dp.k_kwargs,
                   )
     # _iblqc_ephysSaturation.samples.npy
     logger.info("Pre-processing: applying destriping option to the raw data")
