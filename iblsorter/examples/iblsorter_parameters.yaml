@@ -16,16 +16,17 @@ destripe_parameters:
     N: 3
     Wn: 300.0
     btype: highpass
-  k_filter: true
-  k_kwargs:
-    ntr_pad: 60
-    ntr_tap: 0
-    lagc: 3000
-    butter_kwargs:
-      N: 3
-      Wn: 0.01
-      btype: highpass
-    epsilon: 1.0e-08
+  k_filter: false  # False: CAR (default), True: k-filter, null: no spatial filter
+  k_kwargs: null
+  # k_kwargs:       # ibldsp defaults shown below — uncomment and set k_filter: true to use k-filter
+  #   ntr_pad: 60
+  #   ntr_tap: 0
+  #   lagc: 3000
+  #   butter_kwargs:
+  #     N: 3
+  #     Wn: 0.01
+  #     btype: highpass
+  #   epsilon: 1.0e-08
 deterministic_mode: true
 fs: 30000.0
 fshigh: 300.0

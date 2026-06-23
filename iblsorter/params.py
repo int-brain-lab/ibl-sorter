@@ -137,7 +137,7 @@ class DestripeParams(BaseModel):
         ),
     )
     k_filter: Optional[bool] = Field(
-        True,
+        False,
         description="Spatial filter applied after butterworth: True applies k-filter, False applies CAR, None skips spatial filtering",
     )
     k_kwargs: Optional[dict] = Field(

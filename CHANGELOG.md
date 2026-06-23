@@ -13,6 +13,7 @@ Added / Removed / Changed / Fixed
 
 ### Changed
 - Minimum `ibl-neuropixel` requirement bumped to 1.11.2
+- Default spatial filter switched from k-filter to CAR (`k_filter: false`)
 
 ### [1.12.1] 2025-12-16
 
